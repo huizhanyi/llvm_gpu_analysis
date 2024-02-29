@@ -61,4 +61,8 @@ y[1] = 0
 y[2] = 0
 y[3] = 0
 ```
+4、dump bitcode
+```
+~/llvm-project/build-debug/bin/clang++ ./axpy.cu -emit-llvm -S  --cuda-gpu-arch=sm_60
+```
 
