@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 
   float a = 2.0f;
   float host_x[kDataLen] = {1.0f, 2.0f, 3.0f, 4.0f};
-  float host_y[kDataLen];
+  float host_y[kDataLen] = {0.0f};
 
   // Copy input data to device.
   float* device_x;
@@ -56,9 +56,9 @@ int main(int argc, char* argv[]) {
 我的WSL可以执行axpy程序，但是结果不对
 ```
 yhz@DESKTOP-A2C7G7A:~/cuda$ ./axpy
-y[0] = 7.00649e-45
+y[0] = 0
 y[1] = 0
-y[2] = 6.15794e-14
-y[3] = 3.09e-41
+y[2] = 0
+y[3] = 0
 ```
 
