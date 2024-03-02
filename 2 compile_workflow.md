@@ -22,11 +22,16 @@ clang++ ./axpy.cu -o axpy  --cuda-gpu-arch=sm_60 -L /usr/local/cuda/lib64 -lcuda
 ```
 cuobjdump --dump-sass ./axpy-cuda-nvptx64-nvidia-cuda-sm_60.cubin
 ```
-关于SASS参考
+关于SASS参考:
+
 https://zhuanlan.zhihu.com/p/161624982
+
 https://zhuanlan.zhihu.com/p/163865260
+
 https://zhuanlan.zhihu.com/p/166180054
+
 https://docs.nvidia.com/cuda/cuda-binary-utilities/index.html CUDA Binary Utilities
+
 https://github.com/NervanaSystems/maxas/wiki/Control-Codes
 ```
 "/usr/local/cuda-12.3/bin/fatbinary" -64 --create axpy.cu-cuda-nvptx64-nvidia-cuda.fatbin --image=profile=sm_60,file=axpy-cuda-nvptx64-nvidia-cuda-sm_60.cubin --image=profile=compute_60,file=axpy-cuda-nvptx64-nvidia-cuda-sm_60.s
