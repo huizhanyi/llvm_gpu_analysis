@@ -6,19 +6,28 @@ clang++ ./axpy.cu -o axpy  --cuda-gpu-arch=sm_60 -L /usr/local/cuda/lib64 -lcuda
 ```
 "/home/yhz/llvm-project/build-debug/bin/clang-18" -cc1 -triple nvptx64-nvidia-cuda -aux-triple x86_64-unknown-linux-gnu -E -dumpdir axpy- -save-temps=cwd -disable-free -clear-ast-before-backend -main-file-name axpy.cu -mrelocation-model static -mframe-pointer=all -fno-rounding-math -no-integrated-as -aux-target-cpu x86-64 -fcuda-is-device -mllvm -enable-memcpyopt-without-libcalls -fcuda-allow-variadic-functions -mlink-builtin-bitcode /usr/local/cuda-12.3/nvvm/libdevice/libdevice.10.bc -target-sdk-version=12.3 -target-cpu sm_60 -target-feature +ptx83 -debugger-tuning=gdb -fno-dwarf-directory-asm -fdebug-compilation-dir=/home/yhz/cuda -v -resource-dir /home/yhz/llvm-project/build-debug/lib/clang/18 -internal-isystem /home/yhz/llvm-project/build-debug/lib/clang/18/include/cuda_wrappers -include __clang_cuda_runtime_wrapper.h -internal-isystem /usr/lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9 -internal-isystem /usr/lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9 -internal-isystem /usr/lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9/backward -internal-isystem /usr/lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9 -internal-isystem /usr/lib/gcc/x86_64-linux-gnu/9/../../../../include/x86_64-linux-gnu/c++/9 -internal-isystem /usr/lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9/backward -internal-isystem /home/yhz/llvm-project/build-debug/lib/clang/18/include -internal-isystem /usr/local/include -internal-isystem /usr/lib/gcc/x86_64-linux-gnu/9/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -internal-isystem /usr/local/cuda-12.3/include -internal-isystem /home/yhz/llvm-project/build-debug/lib/clang/18/include -internal-isystem /usr/local/include -internal-isystem /usr/lib/gcc/x86_64-linux-gnu/9/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fno-autolink -ferror-limit 19 -pthread -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -fcolor-diagnostics -cuid=805820bbe493b9aa -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o axpy-cuda-nvptx64-nvidia-cuda-sm_60.cui -x cuda ./axpy.cu
 ```
-生成axpy-cuda-nvptx64-nvidia-cuda-sm_60.cui文件
+生成axpy-cuda-nvptx64-nvidia-cuda-sm_60.cui文件，其中是设备侧预处理的源代码。
 ```
 "/home/yhz/llvm-project/build-debug/bin/clang-18" -cc1 -triple nvptx64-nvidia-cuda -aux-triple x86_64-unknown-linux-gnu -emit-llvm-bc -emit-llvm-uselists -dumpdir axpy- -save-temps=cwd -disable-free -clear-ast-before-backend -main-file-name axpy.cu -mrelocation-model static -mframe-pointer=all -fno-rounding-math -no-integrated-as -aux-target-cpu x86-64 -fcuda-is-device -mllvm -enable-memcpyopt-without-libcalls -fcuda-allow-variadic-functions -mlink-builtin-bitcode /usr/local/cuda-12.3/nvvm/libdevice/libdevice.10.bc -target-sdk-version=12.3 -target-cpu sm_60 -target-feature +ptx83 -debugger-tuning=gdb -fno-dwarf-directory-asm -fdebug-compilation-dir=/home/yhz/cuda -v -resource-dir /home/yhz/llvm-project/build-debug/lib/clang/18 -fdeprecated-macro -fno-autolink -ferror-limit 19 -pthread -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -fcolor-diagnostics -disable-llvm-passes -cuid=805820bbe493b9aa -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -x cuda-cpp-output axpy-cuda-nvptx64-nvidia-cuda-sm_60.cui
 ```
-生成文件axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc
+生成文件axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc，包括设备侧bitcode文件。
 ```
 "/home/yhz/llvm-project/build-debug/bin/clang-18" -cc1 -triple nvptx64-nvidia-cuda -aux-triple x86_64-unknown-linux-gnu -S -dumpdir axpy- -save-temps=cwd -disable-free -clear-ast-before-backend -main-file-name axpy.cu -mrelocation-model static -mframe-pointer=all -fno-rounding-math -no-integrated-as -aux-target-cpu x86-64 -fcuda-is-device -mllvm -enable-memcpyopt-without-libcalls -fcuda-allow-variadic-functions -mlink-builtin-bitcode /usr/local/cuda-12.3/nvvm/libdevice/libdevice.10.bc -target-sdk-version=12.3 -target-cpu sm_60 -target-feature +ptx83 -debugger-tuning=gdb -fno-dwarf-directory-asm -fdebug-compilation-dir=/home/yhz/cuda -v -resource-dir /home/yhz/llvm-project/build-debug/lib/clang/18 -fno-autolink -ferror-limit 19 -pthread -fgnuc-version=4.2.1 -fcolor-diagnostics -cuid=805820bbe493b9aa -o axpy-cuda-nvptx64-nvidia-cuda-sm_60.s -x ir axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc
 ```
-生成文件axpy-cuda-nvptx64-nvidia-cuda-sm_60.s
+生成文件axpy-cuda-nvptx64-nvidia-cuda-sm_60.s，这里是NVPTX文件
 ```
 "/usr/local/cuda-12.3/bin/ptxas" -m64 -O0 -v --gpu-name sm_60 --output-file axpy-cuda-nvptx64-nvidia-cuda-sm_60.cubin axpy-cuda-nvptx64-nvidia-cuda-sm_60.s
 ```
-生成axpy-cuda-nvptx64-nvidia-cuda-sm_60.cubin
+生成axpy-cuda-nvptx64-nvidia-cuda-sm_60.cubin,使用cuobjdump生成汇编代码
+```
+cuobjdump --dump-sass ./axpy-cuda-nvptx64-nvidia-cuda-sm_60.cubin
+```
+关于SASS参考
+https://zhuanlan.zhihu.com/p/161624982
+https://zhuanlan.zhihu.com/p/163865260
+https://zhuanlan.zhihu.com/p/166180054
+https://docs.nvidia.com/cuda/cuda-binary-utilities/index.html CUDA Binary Utilities
+https://github.com/NervanaSystems/maxas/wiki/Control-Codes
 ```
 "/usr/local/cuda-12.3/bin/fatbinary" -64 --create axpy.cu-cuda-nvptx64-nvidia-cuda.fatbin --image=profile=sm_60,file=axpy-cuda-nvptx64-nvidia-cuda-sm_60.cubin --image=profile=compute_60,file=axpy-cuda-nvptx64-nvidia-cuda-sm_60.s
 ```
