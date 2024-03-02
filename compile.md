@@ -61,8 +61,25 @@ y[1] = 0
 y[2] = 0
 y[3] = 0
 ```
+检查二进制程序axpy
+```
+readelf -S ./axpy
+```
+```
+There are 33 section headers, starting at offset 0xf2150:
+Section Headers:
+  [Nr] Name              Type             Address           Offset
+       Size              EntSize          Flags  Link  Info  Align
+
+  [16] .nv_fatbin        PROGBITS         0000000000093740  00093740
+       0000000000001028  0000000000000000   A       0     0     8
+```
 4、dump bitcode
 ```
-~/llvm-project/build-debug/bin/clang++ ./axpy.cu -emit-llvm -S  --cuda-gpu-arch=sm_60
+clang++ ./axpy.cu -emit-llvm -c  --cuda-gpu-arch=sm_60
 ```
+输出2个文件
+axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc  axpy.bc
+第一个是nvptx后端文件，第二个是x86平台文件。
+
 
