@@ -22,15 +22,27 @@ clang++ ./axpy.cu -o axpy  --cuda-gpu-arch=sm_60 -L /usr/local/cuda/lib64 -lcuda
 ```
 cuobjdump --dump-sass ./axpy-cuda-nvptx64-nvidia-cuda-sm_60.cubin
 ```
+或者使用
+```
+nvdisasm ./axpy-cuda-nvptx64-nvidia-cuda-sm_60.cubin
+```
+从host的二进制提取cubin文件
+```
+cuobjdump ./axpy -xelf all
+```
+查看资源使用情况
+```
+cuobjdump ./axpy.1.sm_60.cubin -res-usage
+```
 关于SASS参考:
+
+https://docs.nvidia.com/cuda/cuda-binary-utilities/index.html CUDA Binary Utilities
 
 https://zhuanlan.zhihu.com/p/161624982
 
 https://zhuanlan.zhihu.com/p/163865260
 
 https://zhuanlan.zhihu.com/p/166180054
-
-https://docs.nvidia.com/cuda/cuda-binary-utilities/index.html CUDA Binary Utilities
 
 https://github.com/NervanaSystems/maxas/wiki/Control-Codes
 ```
