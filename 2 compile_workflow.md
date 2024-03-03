@@ -98,3 +98,55 @@ _Z19__device_stub__axpyfPfS_函数原型为
 __device_stub__axpy(float, float *, float *)
 ```
 其中的参数为a, device_x, device_y。
+__device_stub__axpy函数由lib/CodeGen/CGCUDANV.cpp内部CGNVCUDARuntime::emitDeviceStubBodyNew生成的函数
+对应的bitcode函数表示形式在bitcode文件中可以看到。
+```
+; Function Attrs: mustprogress noinline norecurse optnone uwtable
+define dso_local void @_Z19__device_stub__axpyfPfS_(float noundef %a, ptr noundef %x, ptr noundef %y) #4 {
+entry:
+  %a.addr = alloca float, align 4
+  %x.addr = alloca ptr, align 8
+  %y.addr = alloca ptr, align 8
+  %grid_dim = alloca %struct.dim3, align 8
+  %block_dim = alloca %struct.dim3, align 8
+  %shmem_size = alloca i64, align 8
+  %stream = alloca ptr, align 8
+  %grid_dim.coerce = alloca { i64, i32 }, align 8
+  %block_dim.coerce = alloca { i64, i32 }, align 8
+  store float %a, ptr %a.addr, align 4
+  store ptr %x, ptr %x.addr, align 8
+  store ptr %y, ptr %y.addr, align 8
+  %kernel_args = alloca ptr, i64 3, align 16
+  %0 = getelementptr ptr, ptr %kernel_args, i32 0
+  store ptr %a.addr, ptr %0, align 8
+  %1 = getelementptr ptr, ptr %kernel_args, i32 1
+  store ptr %x.addr, ptr %1, align 8
+  %2 = getelementptr ptr, ptr %kernel_args, i32 2
+  store ptr %y.addr, ptr %2, align 8
+  %3 = call i32 @__cudaPopCallConfiguration(ptr %grid_dim, ptr %block_dim, ptr %shmem_size, ptr %stream)
+  %4 = load i64, ptr %shmem_size, align 8
+  %5 = load ptr, ptr %stream, align 8
+  call void @llvm.memcpy.p0.p0.i64(ptr align 8 %grid_dim.coerce, ptr align 8 %grid_dim, i64 12, i1 false)
+  %6 = getelementptr inbounds { i64, i32 }, ptr %grid_dim.coerce, i32 0, i32 0
+  %7 = load i64, ptr %6, align 8
+  %8 = getelementptr inbounds { i64, i32 }, ptr %grid_dim.coerce, i32 0, i32 1
+  %9 = load i32, ptr %8, align 8
+  call void @llvm.memcpy.p0.p0.i64(ptr align 8 %block_dim.coerce, ptr align 8 %block_dim, i64 12, i1 false)
+  %10 = getelementptr inbounds { i64, i32 }, ptr %block_dim.coerce, i32 0, i32 0
+  %11 = load i64, ptr %10, align 8
+  %12 = getelementptr inbounds { i64, i32 }, ptr %block_dim.coerce, i32 0, i32 1
+  %13 = load i32, ptr %12, align 8
+  %call = call noundef i32 @cudaLaunchKernel(ptr noundef @_Z19__device_stub__axpyfPfS_, i64 %7, i32 %9, i64 %11, i32 %13, ptr noundef %kernel_args, i64 noundef %4, ptr noundef %5)
+  br label %setup.end
+
+setup.end:                                        ; preds = %entry
+  ret void
+}
+```
+真正启动 CUDA Kernel 的函数 cudaLaunchKernel
+```
+__host__​cudaError_t cudaLaunchKernel ( const void* func, dim3 gridDim, dim3 blockDim, void** args, size_t sharedMem, cudaStream_t stream )
+```
+其中 const void* func 指向了 device stub function 本身，args 是 device stub 把自己的参数保存下来放到数组中的，其余的参数是经过 __cudaPushCallConfiguration 保存又用 __cudaPopCallConfiguration 取出的启动配置。
+这时候你可能觉得很奇怪，为什么要传 function 本身的指针，按理说要启动 GPU 上的 CUDA Kernel，不应该给一个 CUDA Kernel 的指针吗？CUDA Runtime 怎么能通过 device stub function 的指针，判断对应的 CUDA Kernel 是哪个呢？下面来讨论这个问题。
+
