@@ -90,3 +90,11 @@ kcall.configok:                                   ; preds = %entry
   call void @_Z19__device_stub__axpyfPfS_(float noundef %9, ptr noundef %10, ptr noundef %11) #10
   br label %kcall.end
 ```
+这里由./clang/lib/CodeGen/CGCUDARuntime.cpp的EmitCUDAKernelCallExpr生成。
+其中__cudaPushCallConfiguration为cudart_static的内部定义函数，传入grid和block参数。
+
+_Z19__device_stub__axpyfPfS_函数原型为
+```
+__device_stub__axpy(float, float *, float *)
+```
+其中的参数为a, device_x, device_y。
