@@ -72,3 +72,21 @@ https://github.com/NervanaSystems/maxas/wiki/Control-Codes
 ```
 生成axpy
 ## host代码分析
+https://jia.je/software/2023/10/17/clang-cuda-support/#host-%E4%BB%A3%E7%A0%81
+对kernel的调用
+```
+axpy<<<1, kDataLen>>>(a, device_x, device_y);
+```
+展开为
+```
+  %call4 = call i32 @__cudaPushCallConfiguration(i64 %2, i32 %4, i64 %6, i32 %8, i64 noundef 0, ptr noundef null)
+  %tobool = icmp ne i32 %call4, 0
+  br i1 %tobool, label %kcall.end, label %kcall.configok
+
+kcall.configok:                                   ; preds = %entry
+  %9 = load float, ptr %a, align 4
+  %10 = load ptr, ptr %device_x, align 8
+  %11 = load ptr, ptr %device_y, align 8
+  call void @_Z19__device_stub__axpyfPfS_(float noundef %9, ptr noundef %10, ptr noundef %11) #10
+  br label %kcall.end
+```
