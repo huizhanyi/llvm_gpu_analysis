@@ -1,3 +1,4 @@
+参考：https://jia.je/software/2023/10/17/clang-cuda-support/
 增加选项-v，检查编译过程,增加选项--save-temps保存临时中间文件。
 ```
 clang++ ./axpy.cu -o axpy  --cuda-gpu-arch=sm_60 -L /usr/local/cuda/lib64 -lcudart_static -ldl -lrt -pthread -v
