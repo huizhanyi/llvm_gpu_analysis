@@ -149,4 +149,33 @@ __host__​cudaError_t cudaLaunchKernel ( const void* func, dim3 gridDim, dim3 b
 ```
 其中 const void* func 指向了 device stub function 本身，args 是 device stub 把自己的参数保存下来放到数组中的，其余的参数是经过 __cudaPushCallConfiguration 保存又用 __cudaPopCallConfiguration 取出的启动配置。
 这时候你可能觉得很奇怪，为什么要传 function 本身的指针，按理说要启动 GPU 上的 CUDA Kernel，不应该给一个 CUDA Kernel 的指针吗？CUDA Runtime 怎么能通过 device stub function 的指针，判断对应的 CUDA Kernel 是哪个呢？下面来讨论这个问题。
-
+## CUDA Runtime 注册
+llvm-project/clang/lib/CodeGen/CGCUDANV.cpp
+```
+ 685 llvm::Function *CGNVCUDARuntime::makeModuleCtorFunction() {
+```
+编译器自动生成contructor函数，用于运行时注册。constructor函数注册到@llvm.global_ctors变量，在程序启动时调用初始化。
+```
+ 668 /// For CUDA:
+ 669 /// \code
+ 670 /// void __cuda_module_ctor() {
+ 671 ///     Handle = __cudaRegisterFatBinary(GpuBinaryBlob);
+ 672 ///     __cuda_register_globals(Handle);
+ 673 /// }
+ 674 /// \endcode
+```
+这个函数调用__cudaRegisterFatBinary，注册fatbin的地址。
+__cuda_register_globals函数是自动生成的函数
+```
+define internal void @__cuda_register_globals(ptr %0) {
+entry:
+  %1 = call i32 @__cudaRegisterFunction(ptr %0, ptr @_Z19__device_stub__axpyfPfS_, ptr @0, ptr @0, i32 -1, ptr null, ptr null, ptr null, ptr null, ptr null)
+  ret void
+}
+```
+这里调用__cudaRegisterFunction登记了stub函数，建立了stub和fatbin的kernel函数之间的关系。
+fatbin文件可以使用cuobjdump查看
+```
+cuobjdump --dump-elf axpy.cu-cuda-nvptx64-nvidia-cuda.fatbin
+cuobjdump --dump-sass axpy.cu-cuda-nvptx64-nvidia-cuda.fatbin
+```
