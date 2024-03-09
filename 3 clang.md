@@ -17,12 +17,71 @@ hexdump -C axpy.cu-cuda-nvptx64-nvidia-cuda.fatbin
 @__cuda_fatbin_wrapper = internal constant { i32, i32, ptr, ptr } { i32 1180844977, i32 1, ptr @1, ptr null }, section ".nvFatBinSegment", align 8
 ```
 另外一个常量@__cuda_fatbin_wrapper定义在.nvFatBinSegment段，类型为constant { i32, i32, ptr, ptr }，其中第三个参数指向前面的@1
-对应指向fatbin的数据地址？
+对应指向fatbin的数据地址。这里变量由clang代码CGCUDANV.cpp生成：
+```
+ 795   // Create initialized wrapper structure that points to the loaded GPU binary
+ 796   ConstantInitBuilder Builder(CGM);
+ 797   auto Values = Builder.beginStruct(FatbinWrapperTy);
+ 798   // Fatbin wrapper magic.
+ 799   Values.addInt(IntTy, FatMagic);
+ 800   // Fatbin version.
+ 801   Values.addInt(IntTy, 1);
+ 802   // Data.
+ 803   Values.add(FatBinStr);
+ 804   // Unused in fatbin v1.
+ 805   Values.add(llvm::ConstantPointerNull::get(PtrTy));
+ 806   llvm::GlobalVariable *FatbinWrapper = Values.finishAndCreateGlobal(
+ 807       addUnderscoredPrefixToName("_fatbin_wrapper"), CGM.getPointerAlign(),
+ 808       /*constant*/ true);
+ 809   FatbinWrapper->setSection(FatbinSectionName);
+```
 ```
 @llvm.global_ctors = appending global [2 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 65535, ptr @_GLOBAL__sub_I_axpy.cu, ptr null }, { i32, ptr, ptr } { i32 65535, ptr @__cuda_module_ctor, ptr null }]
 ```
 @llvm.global_ctors是系统定义的全局变量，包括了系统定义的constructor函数列表。这里定义了2个函数
 @_GLOBAL__sub_I_axpy.cu和@__cuda_module_ctor
+@_GLOBAL__sub_I_axpy.cu函数是C++启动相关的初始化函数，不分析。
+@__cuda_module_ctor函数定义如下：
+```
+define internal void @__cuda_module_ctor() {
+entry:
+__cudaRegisterFatBinary定义在libcudart_static.a，参数@__cuda_fatbin_wrapper
+  %0 = call ptr @__cudaRegisterFatBinary(ptr @__cuda_fatbin_wrapper)
+返回指针保存到全局变量@__cuda_gpubin_handle
+  store ptr %0, ptr @__cuda_gpubin_handle, align 8
+登记全局变量和函数
+  call void @__cuda_register_globals(ptr %0)
+定义在libcudart_static.a
+  call void @__cudaRegisterFatBinaryEnd(ptr %0)
+登记程序退出的dtor函数
+  %1 = call i32 @atexit(ptr @__cuda_module_dtor)
+  ret void
+}
+```
+```
+define internal void @__cuda_register_globals(ptr %0) {
+entry:
+定义在libcudart_static.a，按之前的分析，登记核函数和stub函数的对应关系。
+  %1 = call i32 @__cudaRegisterFunction(ptr %0, ptr @_Z19__device_stub__axpyfPfS_, ptr @0, ptr @0, i32 -1, ptr null, ptr null, ptr null, ptr null, ptr null)
+  ret void
+}
+```
+每个__global__函数定义了一个stub函数,host侧直接调用这个stub函数实现对device侧的调用。
+```
+define dso_local void @_Z19__device_stub__axpyfPfS_(float noundef %a, ptr noundef %x, ptr noundef %y) #4 {
+使用@__cudaPopCallConfiguration函数得到保存的运行配置参数，这些配置参数是在stub调用前@__cudaPushCallConfiguration保存的。
+  %3 = call i32 @__cudaPopCallConfiguration(ptr %grid_dim, ptr %block_dim, ptr %shmem_size, ptr %stream)
+根据配置结果，使用@cudaLaunchKernel调用device侧函数。
+  %call = call noundef i32 @cudaLaunchKernel(ptr noundef @_Z19__device_stub__axpyfPfS_, i64 %7, i32 %9, i64 %11, i32 %13, ptr noundef %kernel_args, i64 noundef %4, ptr noundef %5)
+```
+对于cudaMalloc这样的函数
+```
+  %device_x = alloca ptr, align 8
+  %call = call noundef i32 @_ZL10cudaMallocIfE9cudaErrorPPT_m(ptr noundef %device_x, i64 noundef 16)
+```
+直接调用了运行时实现，对应的device_x指针应该指向底层运行时的结构，能够通过运行时找到Device的地址并完成数据传递。
+
+
 
 
 
