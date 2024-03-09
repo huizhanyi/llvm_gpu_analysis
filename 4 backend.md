@@ -221,3 +221,4 @@ llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -debug-
       NVPTX Assembly Printer
       Free MachineFunction
 ```
+后端考虑根据遍情况，从前向后分析编译过程，尤其是有些有趣的遍可以重点分析一下。
