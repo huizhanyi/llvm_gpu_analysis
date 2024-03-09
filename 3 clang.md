@@ -82,8 +82,44 @@ define dso_local void @_Z19__device_stub__axpyfPfS_(float noundef %a, ptr nounde
 直接调用了运行时实现，对应的device_x指针应该指向底层运行时的结构，能够通过运行时找到Device的地址并完成数据传递。
 
 ## device侧bitcode文件生成
+```
+%struct.__cuda_builtin_threadIdx_t = type { i8 }
+这是在内部头文件定义的Struct类型，只有函数没有数据
+$_ZN26__cuda_builtin_threadIdx_t17__fetch_builtin_xEv = comdat any
+函数类型，这个函数定义在后面
+@threadIdx = extern_weak dso_local addrspace(1) global %struct.__cuda_builtin_threadIdx_t, align 1
+这是一个外部全局变量@threadIdx
 
-
+这是实际的设备侧和函数，会生成Fatbin文件放到section中，为什么没有看到地址空间类型的指示？
+define dso_local void @_Z4axpyfPfS_(float noundef %a, ptr noundef %x, ptr noundef %y) #0 {
+entry:
+  %a.addr = alloca float, align 4
+  %x.addr = alloca ptr, align 8
+  %y.addr = alloca ptr, align 8
+  store float %a, ptr %a.addr, align 4, !tbaa !8
+  store ptr %x, ptr %x.addr, align 8, !tbaa !12
+  store ptr %y, ptr %y.addr, align 8, !tbaa !12
+  %0 = load float, ptr %a.addr, align 4, !tbaa !8
+  %1 = load ptr, ptr %x.addr, align 8, !tbaa !12
+  %call = call noundef i32 @_ZN26__cuda_builtin_threadIdx_t17__fetch_builtin_xEv() #3
+  %idxprom = zext i32 %call to i64
+  %arrayidx = getelementptr inbounds float, ptr %1, i64 %idxprom
+  %2 = load float, ptr %arrayidx, align 4, !tbaa !8
+  %mul = fmul contract float %0, %2
+  %3 = load ptr, ptr %y.addr, align 8, !tbaa !12
+  %call1 = call noundef i32 @_ZN26__cuda_builtin_threadIdx_t17__fetch_builtin_xEv() #3
+  %idxprom2 = zext i32 %call1 to i64
+  %arrayidx3 = getelementptr inbounds float, ptr %3, i64 %idxprom2
+  store float %mul, ptr %arrayidx3, align 4, !tbaa !8
+  ret void
+}
+前面的函数
+define linkonce_odr dso_local noundef i32 @_ZN26__cuda_builtin_threadIdx_t17__fetch_builtin_xEv() #1 comdat align 2 {
+entry:
+  %0 = call i32 @llvm.nvvm.read.ptx.sreg.tid.x()
+  ret i32 %0
+}
+```
 
 
 
