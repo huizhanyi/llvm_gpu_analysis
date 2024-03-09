@@ -1,3 +1,4 @@
+## 引言
 bitcode文件生成后，经过优化进入后端，这是bitcode文件到ptx文件的生成过程
 clang的生成过程使用如下的命令：
 ```
@@ -58,3 +59,11 @@ __global__ void axpy(float a, float* x, float* y) {
   y[threadIdx.x] = multiply(a, x[threadIdx.x]);
 }
 ```
+后面可能用到的命令
+```
+llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -debug-only=isel -o axpy-cuda-nvptx64-nvidia-cuda-sm_60-llc.s
+llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -print-after-all -o axpy-cuda-nvptx64-nvidia-cuda-sm_60-llc.s
+llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -view-dag-combine1-dags -o axpy-cuda-nvptx64-nvidia-cuda-sm_60-llc.s
+```
+## nvptx后端分析
+
