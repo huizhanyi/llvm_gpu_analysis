@@ -86,7 +86,7 @@ define dso_local void @_Z19__device_stub__axpyfPfS_(float noundef %a, ptr nounde
 %struct.__cuda_builtin_threadIdx_t = type { i8 }
 这是在内部头文件定义的Struct类型，只有函数没有数据
 $_ZN26__cuda_builtin_threadIdx_t17__fetch_builtin_xEv = comdat any
-函数类型，这个函数定义在后面
+comdata key，提示这个函数可能在多个目标文件出现，链接器碰到如何处理这样的函数。
 @threadIdx = extern_weak dso_local addrspace(1) global %struct.__cuda_builtin_threadIdx_t, align 1
 这是一个外部全局变量@threadIdx
 
