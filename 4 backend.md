@@ -222,3 +222,12 @@ llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -debug-
       Free MachineFunction
 ```
 后端考虑根据遍情况，从前向后分析编译过程，尤其是有些有趣的遍可以重点分析一下。
+## 如何增加PASS结构
+```
+#0  addPassesToGenerateCode (TM=..., PM=..., DisableVerify=85, MMIWP=...) at /home/yhz/llvm-project/llvm/lib/CodeGen/LLVMTargetMachine.cpp:118
+#1  0x000055555779de5e in llvm::LLVMTargetMachine::addPassesToEmitFile (this=0x7ffff7a18010, PM=..., Out=..., DwoOut=0x0,
+    FileType=llvm::CodeGenFileType::AssemblyFile, DisableVerify=false, MMIWP=0x55555be71020)
+    at /home/yhz/llvm-project/llvm/lib/CodeGen/LLVMTargetMachine.cpp:241
+#2  0x0000555556998333 in compileModule (argv=0x7fffffffdf68, Context=...) at /home/yhz/llvm-project/llvm/tools/llc/llc.cpp:720
+#3  0x000055555699601a in main (argc=8, argv=0x7fffffffdf68) at /home/yhz/llvm-project/llvm/tools/llc/llc.cpp:425
+```
