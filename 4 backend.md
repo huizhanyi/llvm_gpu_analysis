@@ -66,4 +66,158 @@ llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -print-
 llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -view-dag-combine1-dags -o axpy-cuda-nvptx64-nvidia-cuda-sm_60-llc.s
 ```
 ## nvptx后端分析
-
+检查后端的PASS
+```
+llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -debug-pass=Structure -o axpy-cuda-nvptx64-nvidia-cuda-sm_60-llc.s
+```
+```
+  ModulePass Manager
+    Pre-ISel Intrinsic Lowering
+    FunctionPass Manager
+      Expand large div/rem
+      Expand large fp convert
+      Replace occurrences of __nvvm_reflect() calls with 0/1
+      NVPTX Image Optimizer
+    Assign valid PTX names to globals
+    Ensure that the global variables are in the global address space
+    FunctionPass Manager
+      Lower pointer arguments of CUDA kernels
+      Dominator Tree Construction
+      SROA
+      convert address space of alloca'ed memory to local
+      Infer address spaces
+      NVPTX lower atomics of local memory
+      Dominator Tree Construction
+      Natural Loop Information
+      Split GEPs to a variadic base and a constant offset for better CSE
+      Speculatively execute instructions
+      Scalar Evolution Analysis
+      Straight line strength reduction
+      Early CSE
+      Scalar Evolution Analysis
+      Nary reassociation
+      Early CSE
+      Expand Atomic instructions
+    Lower ctors and dtors for NVPTX
+    FunctionPass Manager
+      Module Verifier
+      Dominator Tree Construction
+      Basic Alias Analysis (stateless AA impl)
+      Natural Loop Information
+      Canonicalize natural loops
+      Scalar Evolution Analysis
+      Loop Pass Manager
+        Canonicalize Freeze Instructions in Loops
+        Induction Variable Users
+        Loop Strength Reduction
+      Basic Alias Analysis (stateless AA impl)
+      Function Alias Analysis Results
+      Merge contiguous icmps into a memcmp
+      Natural Loop Information
+      Lazy Branch Probability Analysis
+      Lazy Block Frequency Analysis
+      Expand memcmp() to load/stores
+      Lower Garbage Collection Instructions
+      Shadow Stack GC Lowering
+      Lower constant intrinsics
+      Remove unreachable blocks from the CFG
+      Natural Loop Information
+      Post-Dominator Tree Construction
+      Branch Probability Analysis
+      Block Frequency Analysis
+      Constant Hoisting
+      Replace intrinsics with calls to vector library
+      Partially inline calls to library functions
+      Expand vector predication intrinsics
+      Scalarize Masked Memory Intrinsics
+      Expand reduction intrinsics
+      Natural Loop Information
+      TLS Variable Hoist
+      Early CSE
+      Basic Alias Analysis (stateless AA impl)
+      Function Alias Analysis Results
+      Scalar Evolution Analysis
+      GPU Load and Store Vectorizer
+      SROA
+      add an exit instruction before every unreachable
+      Dominator Tree Construction
+      Natural Loop Information
+      CodeGen Prepare
+      Lower invoke and unwind, for unwindless code generators
+      Remove unreachable blocks from the CFG
+      Prepare callbr
+      Safe Stack instrumentation pass
+      Insert stack protectors
+      Module Verifier
+      Lower aggregate copies/intrinsics into loops
+      NVPTX specific alloca hoisting
+      Dominator Tree Construction
+      Basic Alias Analysis (stateless AA impl)
+      Function Alias Analysis Results
+      Natural Loop Information
+      Post-Dominator Tree Construction
+      Branch Probability Analysis
+      Assignment Tracking Analysis
+      Lazy Branch Probability Analysis
+      Lazy Block Frequency Analysis
+      NVPTX DAG->DAG Pattern Instruction Selection
+      Finalize ISel and expand pseudo-instructions
+      Lazy Machine Block Frequency Analysis
+      Early Tail Duplication
+      Optimize machine instruction PHIs
+      Slot index numbering
+      Merge disjoint stack slots
+      Local Stack Slot Allocation
+      Remove dead machine instructions
+      MachineDominator Tree Construction
+      Machine Natural Loop Construction
+      Machine Block Frequency Analysis
+      Early Machine Loop Invariant Code Motion
+      MachineDominator Tree Construction
+      Machine Block Frequency Analysis
+      Machine Common Subexpression Elimination
+      MachinePostDominator Tree Construction
+      Machine Cycle Info Analysis
+      Machine code sinking
+      Peephole Optimizations
+      NVPTX Proxy Register Instruction Erasure
+      Process Implicit Definitions
+      Remove unreachable machine basic blocks
+      Live Variable Analysis
+      MachineDominator Tree Construction
+      Machine Natural Loop Construction
+      Eliminate PHI nodes for register allocation
+      Two-Address instruction pass
+      Slot index numbering
+      Live Interval Analysis
+      Register Coalescer
+      Machine Instruction Scheduler
+      Live Stack Slot Analysis
+      Machine Block Frequency Analysis
+      Stack Slot Coloring
+      NVPTX Prolog Epilog Pass
+      NVPTX optimize redundant cvta.to.local instruction
+      Remove Redundant DEBUG_VALUE analysis
+      Fixup Statepoint Caller Saved
+      MachineDominator Tree Construction
+      Machine Natural Loop Construction
+      Machine Block Frequency Analysis
+      Control Flow Optimizer
+      Post-RA pseudo instruction expansion pass
+      Analyze Machine Code For Garbage Collection
+      MachineDominator Tree Construction
+      Machine Natural Loop Construction
+      Machine Block Frequency Analysis
+      MachinePostDominator Tree Construction
+      Branch Probability Basic Block Placement
+      Insert fentry calls
+      Insert XRay ops
+      Machine Sanitizer Binary Metadata
+      Lazy Machine Block Frequency Analysis
+      Machine Optimization Remark Emitter
+      Stack Frame Layout Analysis
+      MachineDominator Tree Construction
+      Machine Natural Loop Construction
+      NVPTX Assembly Printer
+      Free MachineFunction
+```
