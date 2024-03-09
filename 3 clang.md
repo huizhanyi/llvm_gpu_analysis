@@ -1,5 +1,5 @@
-先简单分析一下clang侧代码
-## clang/lib/CodeGen/CGCUDANV.cpp
+## host侧bitcode文件生成
+clang/lib/CodeGen/CGCUDANV.cpp
 ```
 class CGNVCUDARuntime : public CGCUDARuntime {
 ```
@@ -80,6 +80,8 @@ define dso_local void @_Z19__device_stub__axpyfPfS_(float noundef %a, ptr nounde
   %call = call noundef i32 @_ZL10cudaMallocIfE9cudaErrorPPT_m(ptr noundef %device_x, i64 noundef 16)
 ```
 直接调用了运行时实现，对应的device_x指针应该指向底层运行时的结构，能够通过运行时找到Device的地址并完成数据传递。
+
+## device侧bitcode文件生成
 
 
 
