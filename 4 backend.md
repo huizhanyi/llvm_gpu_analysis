@@ -65,7 +65,7 @@ llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -debug-
 llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -print-after-all -o axpy-cuda-nvptx64-nvidia-cuda-sm_60-llc.s
 llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -view-dag-combine1-dags -o axpy-cuda-nvptx64-nvidia-cuda-sm_60-llc.s
 ```
-## nvptx后端分析
+## nvptx后端分析 - 完整的遍表结构
 检查后端的PASS
 ```
 llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -debug-pass=Structure -o axpy-cuda-nvptx64-nvidia-cuda-sm_60-llc.s
