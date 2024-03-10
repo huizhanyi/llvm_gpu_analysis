@@ -231,3 +231,28 @@ llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -debug-
 #2  0x0000555556998333 in compileModule (argv=0x7fffffffdf68, Context=...) at /home/yhz/llvm-project/llvm/tools/llc/llc.cpp:720
 #3  0x000055555699601a in main (argc=8, argv=0x7fffffffdf68) at /home/yhz/llvm-project/llvm/tools/llc/llc.cpp:425
 ```
+这里检查后端增加了那些PASS
+lib/CodeGen/LLVMTargetMachine.cpp
+```
+114 /// addPassesToX helper drives creation and initialization of TargetPassConfig.
+115 static TargetPassConfig *
+116 addPassesToGenerateCode(LLVMTargetMachine &TM, PassManagerBase &PM,
+117                         bool DisableVerify,
+118                         MachineModuleInfoWrapperPass &MMIWP) {
+119   // Targets may override createPassConfig to provide a target-specific
+120   // subclass.
+这里实际调用的NVPTXTargetMachine子类的函数createPassConfig，定义在llvm/lib/Target/NVPTX/NVPTXTargetMachine.cpp
+实际返回的TargetPassConfig类型是子类NVPTXPassConfig
+121   TargetPassConfig *PassConfig = TM.createPassConfig(PM);
+```
+llvm/lib/Target/NVPTX/NVPTXTargetMachine.cpp
+```
+213 TargetPassConfig *NVPTXTargetMachine::createPassConfig(PassManagerBase &PM) {
+214   return new NVPTXPassConfig(*this, PM);
+215 }
+```
+返回addPassesToGenerateCode
+```
+PassConfig本身也是一个PASS
+124   PM.add(PassConfig);
+```
