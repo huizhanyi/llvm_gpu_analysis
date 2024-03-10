@@ -71,6 +71,19 @@ llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -view-d
 llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -debug-pass=Structure -o axpy-cuda-nvptx64-nvidia-cuda-sm_60-llc.s
 ```
 ```
+Pass Arguments:  -targetlibinfo -targetpassconfig -machinemoduleinfo -tti -nvptx-aa -external-aa -assumption-cache-tracker -tbaa -scoped-noalias-aa -profile-summary-info -collector-metadata -machine-branch-prob -pre-isel-intrinsic-lowering -expand-large-div-rem -expand-large-fp-convert -nvvm-reflect -nvptx-assign-valid-global-names -generic-to-nvvm -nvptx-lower-args -domtree -sroa -nvptx-lower-alloca -infer-address-spaces -nvptx-atomic-lower -domtree -loops -separate-const-offset-from-gep -speculative-execution -scalar-evolution -slsr -early-cse -scalar-evolution -nary-reassociate -early-cse -atomic-expand -nvptx-lower-ctor-dtor -verify -domtree -basic-aa -loops -loop-simplify -scalar-evolution -canon-freeze -iv-users -loop-reduce -basic-aa -aa -mergeicmps -loops -lazy-branch-prob -lazy-block-freq -expand-memcmp -gc-lowering -shadow-stack-gc-lowering -lower-constant-intrinsics -unreachableblockelim -loops -postdomtree -branch-prob -block-freq -consthoist -replace-with-veclib -partially-inline-libcalls -expandvp -scalarize-masked-mem-intrin -expand-reductions -loops -tlshoist -early-cse -basic-aa -aa -scalar-evolution -load-store-vectorizer -sroa -nvptx-lower-unreachable -domtree -loops -codegenprepare -lowerinvoke -unreachableblockelim -callbrprepare -safe-stack -stack-protector -verify -nvptx-lower-aggr-copies -alloca-hoisting -domtree -basic-aa -aa -loops -postdomtree -branch-prob -debug-ata -lazy-branch-prob -lazy-block-freq -nvptx-isel -finalize-isel -lazy-machine-block-freq -early-tailduplication -opt-phis -slotindexes -stack-coloring -localstackalloc -dead-mi-elimination -machinedomtree -machine-loops -machine-block-freq -early-machinelicm -machinedomtree -machine-block-freq -machine-cse -machinepostdomtree -machine-cycles -machine-sink -peephole-opt -nvptx-proxyreg-erasure -processimpdefs -unreachable-mbb-elimination -livevars -machinedomtree -machine-loops -phi-node-elimination -twoaddressinstruction -slotindexes -liveintervals -register-coalescer -machine-scheduler -livestacks -machine-block-freq -stack-slot-coloring -nvptx-peephole -removeredundantdebugvalues -fixup-statepoint-caller-saved -machinedomtree -machine-loops -machine-block-freq -branch-folder -postrapseudos -gc-analysis -machinedomtree -machine-loops -machine-block-freq -machinepostdomtree -block-placement -fentry-insert -xray-instrumentation -machine-sanmd -lazy-machine-block-freq -machine-opt-remark-emitter -stack-frame-layout -machinedomtree -machine-loops
+Target Library Information
+Target Pass Configuration
+Machine Module Information
+Target Transform Information
+NVPTX Address space based Alias Analysis
+External Alias Analysis
+Assumption Cache Tracker
+Type-Based Alias Analysis
+Scoped NoAlias Alias Analysis
+Profile summary info
+Create Garbage Collector Module Metadata
+Machine Branch Probability Analysis
   ModulePass Manager
     Pre-ISel Intrinsic Lowering
     FunctionPass Manager
