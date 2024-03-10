@@ -72,6 +72,7 @@ llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -debug-
 ```
 ```
 Pass Arguments:  -targetlibinfo -targetpassconfig -machinemoduleinfo -tti -nvptx-aa -external-aa -assumption-cache-tracker -tbaa -scoped-noalias-aa -profile-summary-info -collector-metadata -machine-branch-prob -pre-isel-intrinsic-lowering -expand-large-div-rem -expand-large-fp-convert -nvvm-reflect -nvptx-assign-valid-global-names -generic-to-nvvm -nvptx-lower-args -domtree -sroa -nvptx-lower-alloca -infer-address-spaces -nvptx-atomic-lower -domtree -loops -separate-const-offset-from-gep -speculative-execution -scalar-evolution -slsr -early-cse -scalar-evolution -nary-reassociate -early-cse -atomic-expand -nvptx-lower-ctor-dtor -verify -domtree -basic-aa -loops -loop-simplify -scalar-evolution -canon-freeze -iv-users -loop-reduce -basic-aa -aa -mergeicmps -loops -lazy-branch-prob -lazy-block-freq -expand-memcmp -gc-lowering -shadow-stack-gc-lowering -lower-constant-intrinsics -unreachableblockelim -loops -postdomtree -branch-prob -block-freq -consthoist -replace-with-veclib -partially-inline-libcalls -expandvp -scalarize-masked-mem-intrin -expand-reductions -loops -tlshoist -early-cse -basic-aa -aa -scalar-evolution -load-store-vectorizer -sroa -nvptx-lower-unreachable -domtree -loops -codegenprepare -lowerinvoke -unreachableblockelim -callbrprepare -safe-stack -stack-protector -verify -nvptx-lower-aggr-copies -alloca-hoisting -domtree -basic-aa -aa -loops -postdomtree -branch-prob -debug-ata -lazy-branch-prob -lazy-block-freq -nvptx-isel -finalize-isel -lazy-machine-block-freq -early-tailduplication -opt-phis -slotindexes -stack-coloring -localstackalloc -dead-mi-elimination -machinedomtree -machine-loops -machine-block-freq -early-machinelicm -machinedomtree -machine-block-freq -machine-cse -machinepostdomtree -machine-cycles -machine-sink -peephole-opt -nvptx-proxyreg-erasure -processimpdefs -unreachable-mbb-elimination -livevars -machinedomtree -machine-loops -phi-node-elimination -twoaddressinstruction -slotindexes -liveintervals -register-coalescer -machine-scheduler -livestacks -machine-block-freq -stack-slot-coloring -nvptx-peephole -removeredundantdebugvalues -fixup-statepoint-caller-saved -machinedomtree -machine-loops -machine-block-freq -branch-folder -postrapseudos -gc-analysis -machinedomtree -machine-loops -machine-block-freq -machinepostdomtree -block-placement -fentry-insert -xray-instrumentation -machine-sanmd -lazy-machine-block-freq -machine-opt-remark-emitter -stack-frame-layout -machinedomtree -machine-loops
+这是第一个PASS，提供当前目标可用的库信息
 Target Library Information
 Target Pass Configuration
 Machine Module Information
@@ -241,10 +242,13 @@ llvm/tools/llc/llc.cpp
 定义PASS管理结构，增加所有PASS
 645   // Build up all of the passes that we want to do to the module.
 646   legacy::PassManager PM;
-增加一个PASS
+648   // Add an appropriate TargetLibraryInfo pass for the module's triple.
+返回Triple信息，实现TargetLibraryInfoImpl结构
+649   TargetLibraryInfoImpl TLII(Triple(M->getTargetTriple()));
+增加一个PASS，提供当前目标可用的库信息
 654   PM.add(new TargetLibraryInfoWrapperPass(TLII));
 ```
-TargetLibraryInfoWrapperPass也是一个PASS类型，这里调用了
+TargetLibraryInfoWrapperPass也是一个PASS类型，是第一个PASS,这里调用了
 ```
 633   explicit TargetLibraryInfoWrapperPass(const TargetLibraryInfoImpl &TLI);
 
@@ -262,7 +266,7 @@ initializeTargetLibraryInfoWrapperPassPasss是类定义时定义的函数，通�
 ```
 INITIALIZE_PASS定义了函数initializeTargetLibraryInfoWrapperPassPasss
 ```
-这里第三个参数是名字name信息
+这里第三个参数是名字name信息,对应PASS的名字，因此第一个PASS的名字是"Target Library Information"
  38 #define INITIALIZE_PASS(passName, arg, name, cfg, analysis)                    \
  39   static void *initialize##passName##PassOnce(PassRegistry &Registry) {        \
 新建一个PassInfo数据结构
