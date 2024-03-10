@@ -223,6 +223,51 @@ llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -debug-
 ```
 后端考虑根据遍情况，从前向后分析编译过程，尤其是有些有趣的遍可以重点分析一下。
 ## 如何增加PASS结构
+llvm/tools/llc/llc.cpp
+```
+定义PASS管理结构，增加所有PASS
+645   // Build up all of the passes that we want to do to the module.
+646   legacy::PassManager PM;
+增加一个PASS
+654   PM.add(new TargetLibraryInfoWrapperPass(TLII));
+```
+TargetLibraryInfoWrapperPass也是一个PASS类型，这里调用了
+```
+633   explicit TargetLibraryInfoWrapperPass(const TargetLibraryInfoImpl &TLI);
+
+1363 TargetLibraryInfoWrapperPass::TargetLibraryInfoWrapperPass(
+1364     const TargetLibraryInfoImpl &TLIImpl)
+1365     : ImmutablePass(ID), TLA(TLIImpl) {
+1366   initializeTargetLibraryInfoWrapperPassPass(*PassRegistry::getPassRegistry());
+1367 }
+```
+initializeTargetLibraryInfoWrapperPassPasss是类定义时定义的函数，通过如下方式
+```
+1371 // Register the basic pass.
+1372 INITIALIZE_PASS(TargetLibraryInfoWrapperPass, "targetlibinfo",
+1373                 "Target Library Information", false, true)
+```
+INITIALIZE_PASS定义了函数initializeTargetLibraryInfoWrapperPassPasss
+```
+这里第三个参数是名字name信息
+ 38 #define INITIALIZE_PASS(passName, arg, name, cfg, analysis)                    \
+ 39   static void *initialize##passName##PassOnce(PassRegistry &Registry) {        \
+新建一个PassInfo数据结构
+ 40     PassInfo *PI = new PassInfo(                                               \
+ 41         name, arg, &passName::ID,                                              \
+ 42         PassInfo::NormalCtor_t(callDefaultCtor<passName>), cfg, analysis);     \
+并且登记到Registry中
+ 43     Registry.registerPass(*PI, true);                                          \
+返回PassInfo数据结构指针
+ 44     return PI;                                                                 \
+ 45   }                                                                            \
+ 46   static llvm::once_flag Initialize##passName##PassFlag;                       \
+这里定义了上面的函数，调用前面PassOnce一次。
+ 47   void llvm::initialize##passName##Pass(PassRegistry &Registry) {              \
+ 48     llvm::call_once(Initialize##passName##PassFlag,                            \
+ 49                     initialize##passName##PassOnce, std::ref(Registry));       \
+ 50   }
+```
 ```
 #0  addPassesToGenerateCode (TM=..., PM=..., DisableVerify=85, MMIWP=...) at /home/yhz/llvm-project/llvm/lib/CodeGen/LLVMTargetMachine.cpp:118
 #1  0x000055555779de5e in llvm::LLVMTargetMachine::addPassesToEmitFile (this=0x7ffff7a18010, PM=..., Out=..., DwoOut=0x0,
