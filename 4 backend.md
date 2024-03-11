@@ -74,6 +74,7 @@ llc -O1 -mcpu=sm_60 -mattr=+ptx83 axpy-cuda-nvptx64-nvidia-cuda-sm_60.bc -debug-
 Pass Arguments:  -targetlibinfo -targetpassconfig -machinemoduleinfo -tti -nvptx-aa -external-aa -assumption-cache-tracker -tbaa -scoped-noalias-aa -profile-summary-info -collector-metadata -machine-branch-prob -pre-isel-intrinsic-lowering -expand-large-div-rem -expand-large-fp-convert -nvvm-reflect -nvptx-assign-valid-global-names -generic-to-nvvm -nvptx-lower-args -domtree -sroa -nvptx-lower-alloca -infer-address-spaces -nvptx-atomic-lower -domtree -loops -separate-const-offset-from-gep -speculative-execution -scalar-evolution -slsr -early-cse -scalar-evolution -nary-reassociate -early-cse -atomic-expand -nvptx-lower-ctor-dtor -verify -domtree -basic-aa -loops -loop-simplify -scalar-evolution -canon-freeze -iv-users -loop-reduce -basic-aa -aa -mergeicmps -loops -lazy-branch-prob -lazy-block-freq -expand-memcmp -gc-lowering -shadow-stack-gc-lowering -lower-constant-intrinsics -unreachableblockelim -loops -postdomtree -branch-prob -block-freq -consthoist -replace-with-veclib -partially-inline-libcalls -expandvp -scalarize-masked-mem-intrin -expand-reductions -loops -tlshoist -early-cse -basic-aa -aa -scalar-evolution -load-store-vectorizer -sroa -nvptx-lower-unreachable -domtree -loops -codegenprepare -lowerinvoke -unreachableblockelim -callbrprepare -safe-stack -stack-protector -verify -nvptx-lower-aggr-copies -alloca-hoisting -domtree -basic-aa -aa -loops -postdomtree -branch-prob -debug-ata -lazy-branch-prob -lazy-block-freq -nvptx-isel -finalize-isel -lazy-machine-block-freq -early-tailduplication -opt-phis -slotindexes -stack-coloring -localstackalloc -dead-mi-elimination -machinedomtree -machine-loops -machine-block-freq -early-machinelicm -machinedomtree -machine-block-freq -machine-cse -machinepostdomtree -machine-cycles -machine-sink -peephole-opt -nvptx-proxyreg-erasure -processimpdefs -unreachable-mbb-elimination -livevars -machinedomtree -machine-loops -phi-node-elimination -twoaddressinstruction -slotindexes -liveintervals -register-coalescer -machine-scheduler -livestacks -machine-block-freq -stack-slot-coloring -nvptx-peephole -removeredundantdebugvalues -fixup-statepoint-caller-saved -machinedomtree -machine-loops -machine-block-freq -branch-folder -postrapseudos -gc-analysis -machinedomtree -machine-loops -machine-block-freq -machinepostdomtree -block-placement -fentry-insert -xray-instrumentation -machine-sanmd -lazy-machine-block-freq -machine-opt-remark-emitter -stack-frame-layout -machinedomtree -machine-loops
 这是第一个PASS，提供当前目标可用的库信息
 Target Library Information
+这是第二个PASS，完成对Target相关PASS配置的初始化
 Target Pass Configuration
 Machine Module Information
 Target Transform Information
@@ -237,6 +238,7 @@ Machine Branch Probability Analysis
 ```
 后端考虑根据遍情况，从前向后分析编译过程，尤其是有些有趣的遍可以重点分析一下。
 ## 如何增加PASS结构
+### 第一个PASS "Target Library Information"
 llvm/tools/llc/llc.cpp
 ```
 定义PASS管理结构，增加所有PASS
@@ -337,6 +339,7 @@ INITIALIZE_PASS定义了函数initializeTargetLibraryInfoWrapperPassPasss
  49                     initialize##passName##PassOnce, std::ref(Registry));       \
  50   }
 ```
+### 第二个PASS "Target Pass Configuration"
 ```
 #0  addPassesToGenerateCode (TM=..., PM=..., DisableVerify=85, MMIWP=...) at /home/yhz/llvm-project/llvm/lib/CodeGen/LLVMTargetMachine.cpp:118
 #1  0x000055555779de5e in llvm::LLVMTargetMachine::addPassesToEmitFile (this=0x7ffff7a18010, PM=..., Out=..., DwoOut=0x0,
@@ -356,7 +359,7 @@ lib/CodeGen/LLVMTargetMachine.cpp
 119   // Targets may override createPassConfig to provide a target-specific
 120   // subclass.
 这里实际调用的NVPTXTargetMachine子类的函数createPassConfig，定义在llvm/lib/Target/NVPTX/NVPTXTargetMachine.cpp
-实际返回的TargetPassConfig类型是子类NVPTXPassConfig
+实际返回的TargetPassConfig类型是子类NVPTXPassConfig，但是类型名字不变"Target Pass Configuration"
 121   TargetPassConfig *PassConfig = TM.createPassConfig(PM);
 ```
 llvm/lib/Target/NVPTX/NVPTXTargetMachine.cpp
@@ -365,8 +368,33 @@ llvm/lib/Target/NVPTX/NVPTXTargetMachine.cpp
 214   return new NVPTXPassConfig(*this, PM);
 215 }
 ```
+NVPTXPassConfig调用TargetPassConfig的constructor函数
+```
+ 571 TargetPassConfig::TargetPassConfig(LLVMTargetMachine &TM, PassManagerBase &pm)
+ 572     : ImmutablePass(ID), PM(&pm), TM(&TM) {
+ 575   // Register all target independent codegen passes to activate their PassIDs,
+ 576   // including this pass itself.
+ 577   initializeCodeGen(*PassRegistry::getPassRegistry());
+
+ 19 /// initializeCodeGen - Initialize all passes linked into the CodeGen library.
+ 20 void llvm::initializeCodeGen(PassRegistry &Registry) {
+133   initializeTargetPassConfigPass(Registry);
+
+ 353 INITIALIZE_PASS(TargetPassConfig, "targetpassconfig",
+ 354                 "Target Pass Configuration", false, false)
+```
 返回addPassesToGenerateCode
 ```
-PassConfig本身也是一个PASS
+TargetPassConfig本身也是一个PASS
 124   PM.add(PassConfig);
+```
+因此第二个PASS为"Target Pass Configuration",功能是完成对Target相关PASS配置的初始化
+```
+125   PM.add(&MMIWP);
+```
+PASS名称为"Machine Module Information"
+```
+183 // Handle the Pass registration stuff necessary to use DataLayout's.
+184 INITIALIZE_PASS(MachineModuleInfoWrapperPass, "machinemoduleinfo",
+185                 "Machine Module Information", false, false)
 ```
