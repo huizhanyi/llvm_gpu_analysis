@@ -389,12 +389,23 @@ TargetPassConfig本身也是一个PASS
 124   PM.add(PassConfig);
 ```
 因此第二个PASS为"Target Pass Configuration",功能是完成对Target相关PASS配置的初始化
+
 ```
 125   PM.add(&MMIWP);
 ```
-PASS名称为"Machine Module Information"
+这里的PASS名称为"Machine Module Information"
 ```
 183 // Handle the Pass registration stuff necessary to use DataLayout's.
 184 INITIALIZE_PASS(MachineModuleInfoWrapperPass, "machinemoduleinfo",
 185                 "Machine Module Information", false, false)
+
+238   if (!MMIWP)
+239     MMIWP = new MachineModuleInfoWrapperPass(this);
+
+171 MachineModuleInfoWrapperPass::MachineModuleInfoWrapperPass(
+172     const LLVMTargetMachine *TM)
+173     : ImmutablePass(ID), MMI(TM) {
+174   initializeMachineModuleInfoWrapperPassPass(*PassRegistry::getPassRegistry());
+175 }
 ```
+完成Pass的初始化。
