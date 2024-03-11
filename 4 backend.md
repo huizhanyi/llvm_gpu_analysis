@@ -248,6 +248,58 @@ llvm/tools/llc/llc.cpp
 增加一个PASS，提供当前目标可用的库信息
 654   PM.add(new TargetLibraryInfoWrapperPass(TLII));
 ```
+这里getTargetTriple返回TargetTriple，这是通过M->setTargetTriple设置的。对于nvptx后端为"nvptx64-nvidia-cuda"
+Triple构建Triple结构，用于初始化TargetLibraryInfoImpl
+```
+ 891 TargetLibraryInfoImpl::TargetLibraryInfoImpl(const Triple &T) {
+ 892   // Default to everything being available.
+ 893   memset(AvailableArray, -1, sizeof(AvailableArray));
+ 894
+ 895   initialize(*this, T, StandardNames);
+ 896 }
+```
+这里调用了initialize定义为llvm/lib/Analysis/TargetLibraryInfo.cpp
+```
+ 161 /// Initialize the set of available library functions based on the specified
+ 162 /// target triple. This should be carefully written so that a missing target
+ 163 /// triple gets a sane set of defaults.
+ 164 static void initialize(TargetLibraryInfoImpl &TLI, const Triple &T,
+ 165                        ArrayRef<StringLiteral> StandardNames) {
+根据Triple初始化可用的库函数
+ 842   // As currently implemented in clang, NVPTX code has no standard library to
+ 843   // speak of.  Headers provide a standard-ish library implementation, but many
+ 844   // of the signatures are wrong -- for example, many libm functions are not
+ 845   // extern "C".
+ 846   //
+ 847   // libdevice, an IR library provided by nvidia, is linked in by the front-end,
+ 848   // but only used functions are provided to llvm.  Moreover, most of the
+ 849   // functions in libdevice don't map precisely to standard library functions.
+ 850   //
+ 851   // FIXME: Having no standard library prevents e.g. many fastmath
+ 852   // optimizations, so this situation should be fixed.
+这里根据NVPTX后端设置了一些可用的库函数
+ 853   if (T.isNVPTX()) {
+ 854     TLI.disableAllFunctions();
+ 855     TLI.setAvailable(LibFunc_nvvm_reflect);
+ 856     TLI.setAvailable(llvm::LibFunc_malloc);
+ 857     TLI.setAvailable(llvm::LibFunc_free);
+ 858
+ 859     // TODO: We could enable the following two according to [0] but we haven't
+ 860     //       done an evaluation wrt. the performance implications.
+ 861     // [0]
+ 862     // https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#dynamic-global-memory-allocation-and-operations
+ 863     //
+ 864     //    TLI.setAvailable(llvm::LibFunc_memcpy);
+ 865     //    TLI.setAvailable(llvm::LibFunc_memset);
+ 866
+ 867     TLI.setAvailable(llvm::LibFunc___kmpc_alloc_shared);
+ 868     TLI.setAvailable(llvm::LibFunc___kmpc_free_shared);
+ 869   } else {
+ 870     TLI.setUnavailable(LibFunc_nvvm_reflect);
+ 871   }
+```
+这里看在TargetLibraryInfoImpl定义了可用的库函数信息。
+
 TargetLibraryInfoWrapperPass也是一个PASS类型，是第一个PASS,这里调用了
 ```
 633   explicit TargetLibraryInfoWrapperPass(const TargetLibraryInfoImpl &TLI);
