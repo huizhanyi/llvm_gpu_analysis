@@ -409,3 +409,30 @@ TargetPassConfig本身也是一个PASS
 175 }
 ```
 完成Pass的初始化。
+### addISelPasses
+```
+238   /// High level function that adds all passes necessary to go from llvm IR
+239   /// representation to the MI representation.
+240   /// Adds IR based lowering and target specific optimization passes and finally
+241   /// the core instruction selection passes.
+242   /// \returns true if an error occurred, false otherwise.
+243   bool addISelPasses();
+
+1054 bool TargetPassConfig::addISelPasses() {
+没有使用这个PASS
+1055   if (TM->useEmulatedTLS())
+1056     addPass(createLowerEmuTLSPass());
+1057
+PASS "Target Transform Information"
+1058   PM->add(createTargetTransformInfoWrapperPass(TM->getTargetIRAnalysis()));
+1059   addPass(createPreISelIntrinsicLoweringPass());
+1060   addPass(createExpandLargeDivRemPass());
+1061   addPass(createExpandLargeFpConvertPass());
+1062   addIRPasses();
+1063   addCodeGenPrepare();
+1064   addPassesToHandleExceptions();
+1065   addISelPrepare();
+1066
+1067   return addCoreISelPasses();
+1068 }
+```
