@@ -79,6 +79,7 @@ Target Pass Configuration
 Machine Module Information
 Target Transform Information
 NVPTX Address space based Alias Analysis
+由createExternalAAWrapperPass生成，这里添加了一个NVPTX的定制NVPTXAAWrapperPass
 External Alias Analysis
 Assumption Cache Tracker
 Type-Based Alias Analysis
@@ -86,11 +87,17 @@ Scoped NoAlias Alias Analysis
 Profile summary info
 Create Garbage Collector Module Metadata
 Machine Branch Probability Analysis
+这之前的PASS都是ImmutablePass类型PASS，优先放在了前面。
+
   ModulePass Manager
+这是对应到createPreISelIntrinsicLoweringPass生成PASS
     Pre-ISel Intrinsic Lowering
     FunctionPass Manager
+createExpandLargeDivRemPass生成PASS
       Expand large div/rem
+createExpandLargeFpConvertPass生成PASS
       Expand large fp convert
+addIRPasses -> 
       Replace occurrences of __nvvm_reflect() calls with 0/1
       NVPTX Image Optimizer
     Assign valid PTX names to globals
@@ -423,16 +430,43 @@ TargetPassConfig本身也是一个PASS
 1055   if (TM->useEmulatedTLS())
 1056     addPass(createLowerEmuTLSPass());
 1057
-PASS "Target Transform Information"
+PASS "Target Transform Information"，ImmutablePass，直接增加到PASS 管理器
 1058   PM->add(createTargetTransformInfoWrapperPass(TM->getTargetIRAnalysis()));
+PreISelIntrinsicLoweringLegacyPasss是ModulePass类型，看遍表的打印结果，ModulePass在ImmutablePass后面，不清楚是调用确实存在先后，还是遍表打印过程分配打印，猜测应该是前者？MPPassManager是一个Pass的子类，本身应该和ImmutablePass优先级相同？
 1059   addPass(createPreISelIntrinsicLoweringPass());
+这是一个FunctionPass类型Pass，运行在后面。FPPassManager是函数Pass管理器，本身是一个ModulePass。
 1060   addPass(createExpandLargeDivRemPass());
+这是一个FunctionPass类型Pass
 1061   addPass(createExpandLargeFpConvertPass());
+这个函数NVPTX后端有自己的定义
 1062   addIRPasses();
-1063   addCodeGenPrepare();
-1064   addPassesToHandleExceptions();
-1065   addISelPrepare();
-1066
-1067   return addCoreISelPasses();
+...
 1068 }
+```
+NVPTXTargetMachine.cpp
+```
+339 void NVPTXPassConfig::addIRPasses() {
+这是ImmutablePass类型PASS,"NVPTX Address space based Alias Analysis"，对应打印遍表的下面的遍。
+357   addPass(createNVPTXAAWrapperPass());
+358   addPass(createExternalAAWrapperPass([](Pass &P, Function &, AAResults &AAR) {
+359     if (auto *WrapperPass = P.getAnalysisIfAvailable<NVPTXAAWrapperPass>())
+360       AAR.addAAResult(WrapperPass->getResult());
+361   }));
+
+362
+363   // NVVMReflectPass is added in addEarlyAsPossiblePasses, so hopefully running
+364   // it here does nothing.  But since we need it for correctness when lowering
+365   // to NVPTX, run it here too, in case whoever built our pass pipeline didn't
+366   // call addEarlyAsPossiblePasses.
+367   const NVPTXSubtarget &ST = *getTM<NVPTXTargetMachine>().getSubtargetImpl();
+增加一个FunctionPass
+368   addPass(createNVVMReflectPass(ST.getSmVersion()));
+
+370   if (getOptLevel() != CodeGenOptLevel::None)
+371     addPass(createNVPTXImageOptimizerPass());
+另外的FunctionPASS,前面的FunctionPASS都合并到一个FunctionManager中管理
+这是一个ModuelPASS
+372   addPass(createNVPTXAssignValidGlobalNamesPass());
+这是一个ModuelPASS，对应"Ensure that the global variables are in the global address space"
+373   addPass(createGenericToNVVMLegacyPass());
 ```
