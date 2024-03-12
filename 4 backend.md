@@ -469,4 +469,15 @@ NVPTXTargetMachine.cpp
 372   addPass(createNVPTXAssignValidGlobalNamesPass());
 这是一个ModuelPASS，对应"Ensure that the global variables are in the global address space"
 373   addPass(createGenericToNVVMLegacyPass());
+FunctionPASS,对应"Lower pointer arguments of CUDA kernels"
+377   addPass(createNVPTXLowerArgsPass());
+因为打开了优化开关，这里对应一系列的优化PASS
+378   if (getOptLevel() != CodeGenOptLevel::None) {
+379     addAddressSpaceInferencePasses();
+380     addStraightLineScalarOptimizationPasses();
+381   }
+对应"Expand Atomic instructions"
+383   addPass(createAtomicExpandPass());
+
+384   addPass(createNVPTXCtorDtorLoweringLegacyPass());
 ```
