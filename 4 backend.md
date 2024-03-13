@@ -425,6 +425,7 @@ TargetPassConfig本身也是一个PASS
 242   /// \returns true if an error occurred, false otherwise.
 243   bool addISelPasses();
 
+TargetPassConfig.cpp
 1054 bool TargetPassConfig::addISelPasses() {
 没有使用这个PASS
 1055   if (TM->useEmulatedTLS())
@@ -478,6 +479,44 @@ FunctionPASS,对应"Lower pointer arguments of CUDA kernels"
 381   }
 对应"Expand Atomic instructions"
 383   addPass(createAtomicExpandPass());
-
+对应 "Lower ctors and dtors for NVPTX" PASS
 384   addPass(createNVPTXCtorDtorLoweringLegacyPass());
+
+387   TargetPassConfig::addIRPasses();
+调用基类的PASS。
+408   addPass(createNVPTXLowerUnreachablePass(Options.TrapUnreachable,
+409                                           Options.NoTrapAfterNoreturn));
+最后为"add an exit instruction before every unreachable"
+```
+返回TargetPassConfig.cpp
+```
+1067   return addCoreISelPasses();
+```
+```
+ 967 bool TargetPassConfig::addCoreISelPasses() {
+1041   } else if (addInstSelector())
+1046   addPass(&FinalizeISelID);
+```
+### NVPTX后端指令选择PASS
+NVPTX后端定制了函数addInstSelector
+```
+412 bool NVPTXPassConfig::addInstSelector() {
+413   const NVPTXSubtarget &ST = *getTM<NVPTXTargetMachine>().getSubtargetImpl();
+414
+PASS "Lower aggregate copies/intrinsics into loops"
+415   addPass(createLowerAggrCopies());
+PASS "NVPTX specific alloca hoisting"
+416   addPass(createAllocaHoisting());
+PASS "NVPTX DAG->DAG Pattern Instruction Selection"
+417   addPass(createNVPTXISelDag(getNVPTXTargetMachine(), getOptLevel()));
+418
+419   if (!ST.hasImageHandles())
+420     addPass(createNVPTXReplaceImageHandlesPass());
+421
+422   return false;
+423 }
+```
+CodeGen/LLVMTargetMachine.cpp
+```
+129   PassConfig->addMachinePasses();
 ```
