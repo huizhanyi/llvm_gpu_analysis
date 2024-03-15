@@ -520,3 +520,34 @@ CodeGen/LLVMTargetMachine.cpp
 ```
 129   PassConfig->addMachinePasses();
 ```
+llvm/lib/CodeGen/TargetPassConfig.cpp
+```
+1077 /// Add the complete set of target-independent postISel code generator passes.
+1079 /// This can be read as the standard order of major LLVM CodeGen stages. Stages
+1080 /// with nontrivial configuration or multiple passes are broken out below in
+1081 /// add%Stage routines.
+1095 void TargetPassConfig::addMachinePasses() {
+1099   if (getOptLevel() != CodeGenOptLevel::None) {
+1100     addMachineSSAOptimization();
+有优化标志，增加优化PASS
+470 void NVPTXPassConfig::addMachineSSAOptimization() {
+"Early Tail Duplication"
+"Optimize machine instruction PHIs"
+"Merge disjoint stack slots"
+"Local Stack Slot Allocation"
+"Remove dead machine instructions"
+1111   addPreRegAlloc();
+"NVPTX Proxy Register Instruction Erasure"
+1260   PM->add(createStackFrameLayoutAnalysisPass());
+"Stack Frame Layout"
+```
+addPassesToGenerateCode结束
+```
+245   if (TargetPassConfig::willCompleteCodeGenPipeline()) {
+246     if (addAsmPrinter(PM, Out, DwoOut, FileType, MMIWP->getMMI().getContext()))
+247       return true;
+"NVPTX Assembly Printer"
+```
+"Free MachineFunction"
+### PASS Name的来源
+
