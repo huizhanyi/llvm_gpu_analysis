@@ -550,4 +550,66 @@ addPassesToGenerateCode结束
 ```
 "Free MachineFunction"
 ### PASS Name的来源
+查看PASS NAME的来源，例如最后一个PASS "Free MachineFunction"
+```
+#0  llvm::NVPTXAsmPrinter::getPassName (this=0x0) at /home/yhz/llvm-project/llvm/lib/Target/NVPTX/NVPTXAsmPrinter.h:154
+#1  0x0000555558137b73 in llvm::Pass::dumpPassStructure (this=0x55555bea7f90, Offset=3) at /home/yhz/llvm-project/llvm/lib/IR/Pass.cpp:75
+#2  0x00005555580bb80e in llvm::FPPassManager::dumpPassStructure (this=0x55555be88790, Offset=2)
+    at /home/yhz/llvm-project/llvm/lib/IR/LegacyPassManager.cpp:1393
+#3  0x00005555580b6e4d in (anonymous namespace)::MPPassManager::dumpPassStructure (this=0x55555be73520, Offset=1)
+    at /home/yhz/llvm-project/llvm/lib/IR/LegacyPassManager.cpp:435
+#4  0x00005555580b8c06 in llvm::PMTopLevelManager::dumpPasses (this=0x55555be73128) at /home/yhz/llvm-project/llvm/lib/IR/LegacyPassManager.cpp:837
+#5  0x00005555580b704c in llvm::legacy::PassManagerImpl::run (this=0x55555be72f80, M=...)
+    at /home/yhz/llvm-project/llvm/lib/IR/LegacyPassManager.cpp:529
+#6  0x00005555580bcb57 in llvm::legacy::PassManager::run (this=0x7fffffffd7b0, M=...) at /home/yhz/llvm-project/llvm/lib/IR/LegacyPassManager.cpp:1685
+#7  0x000055555699855a in compileModule (argv=0x7fffffffdf68, Context=...) at /home/yhz/llvm-project/llvm/tools/llc/llc.cpp:749
+#8  0x000055555699601a in main (argc=8, argv=0x7fffffffdf68) at /home/yhz/llvm-project/llvm/tools/llc/llc.cpp:425
+```
+/home/yhz/llvm-project/llvm/lib/IR/LegacyPassManager.cpp
+```
+ 525 bool PassManagerImpl::run(Module &M) {
+ 528   dumpArguments();
+ 529   dumpPasses();
+```
+
+```
+ 840 void PMTopLevelManager::dumpArguments() const {
+ 841
+ 842   if (PassDebugging < Arguments)
+ 843     return;
+ 844
+这里打印Pass Arguments
+ 845   dbgs() << "Pass Arguments: ";
+首先打印所有的ImmutablePasses
+ 846   for (ImmutablePass *P : ImmutablePasses)
+ 847     if (const PassInfo *PI = findAnalysisPassInfo(P->getPassID())) {
+ 848       assert(PI && "Expected all immutable passes to be initialized");
+ 849       if (!PI->isAnalysisGroup())
+ 850         dbgs() << " -" << PI->getPassArgument();
+ 851     }
+其他PASS
+ 852   for (PMDataManager *PM : PassManagers)
+ 853     PM->dumpPassArguments();
+ 854   dbgs() << "\n";
+ 855 }
+```
+```
+ 822 void PMTopLevelManager::dumpPasses() const {
+ 823
+根据PassDebugging，小于Struture不打印
+ 824   if (PassDebugging < Structure)
+ 825     return;
+同样先打印ImmutablePasses
+ 827   // Print out the immutable passes
+ 828   for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i) {
+ 829     ImmutablePasses[i]->dumpPassStructure(0);
+ 830   }
+再打印其他PASS的信息
+ 836   for (PMDataManager *Manager : PassManagers)
+ 837     Manager->getAsPass()->dumpPassStructure(1);
+调用对应PASS的getPassName函数，打印PASS NAME
+ 74 void Pass::dumpPassStructure(unsigned Offset) {
+ 75   dbgs().indent(Offset*2) << getPassName() << "\n";
+ 76 }
+```
 
