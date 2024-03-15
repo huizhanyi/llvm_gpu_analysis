@@ -550,7 +550,7 @@ addPassesToGenerateCode结束
 ```
 "Free MachineFunction"
 ### PASS Name的来源
-查看PASS NAME的来源，例如最后一个PASS "Free MachineFunction"
+查看PASS NAME的来源，例如PASS "NVPTX Assembly Printer"
 ```
 #0  llvm::NVPTXAsmPrinter::getPassName (this=0x0) at /home/yhz/llvm-project/llvm/lib/Target/NVPTX/NVPTXAsmPrinter.h:154
 #1  0x0000555558137b73 in llvm::Pass::dumpPassStructure (this=0x55555bea7f90, Offset=3) at /home/yhz/llvm-project/llvm/lib/IR/Pass.cpp:75
@@ -611,5 +611,29 @@ addPassesToGenerateCode结束
  74 void Pass::dumpPassStructure(unsigned Offset) {
  75   dbgs().indent(Offset*2) << getPassName() << "\n";
  76 }
+llvm::NVPTXAsmPrinter::getPassName()
 ```
+再检查"NVPTX DAG->DAG Pattern Instruction Selection"遍
+```
+#define PASS_NAME "NVPTX DAG->DAG Pattern Instruction Selection"
+INITIALIZE_PASS(NVPTXDAGToDAGISel, DEBUG_TYPE, PASS_NAME, false, false)
+```
+这个PASS的名字来自INITIALIZE_PASS定义的第三个参数。
+这是调用的Pass类的
+```
+StringRef Pass::getPassName()
+ 81 StringRef Pass::getPassName() const {
+这里首先找到PassID
+ 82   AnalysisID AID =  getPassID();
+然后找到对应的PassInfo
+ 83   const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(AID);
+调用对应的PassInfo的getPassName，这是通过INITIALIZE_PASS注册的Pass Name
+ 84   if (PI)
+ 85     return PI->getPassName();
+ 86   return "Unnamed pass: implement Pass::getPassName()";
+ 87 }
+```
+这里的NVPTXDAGToDAGISel定义的Pass一路继承自Pass，因此调用了Pass::getPassName()函数。
+而前面的NVPTXAsmPrinter PASS则自己重载了getPassName，因此打印的是自己定义的Pass Name。
+因此自定义了getPassName函数的情况下打印名字优先，否则打印的名字是INITIALIZE_PASS这些宏定义的PassName
 
