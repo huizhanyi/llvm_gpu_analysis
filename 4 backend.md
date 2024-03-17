@@ -637,3 +637,73 @@ StringRef Pass::getPassName()
 而前面的NVPTXAsmPrinter PASS则自己重载了getPassName，因此打印的是自己定义的Pass Name。
 因此自定义了getPassName函数的情况下打印名字优先，否则打印的名字是INITIALIZE_PASS这些宏定义的PassName
 
+## 后端逐PASS分析
+### Pre-ISel Intrinsic Lowering
+PreISelIntrinsicLowering.cpp
+```
+381   bool runOnModule(Module &M) override {
+用来返回TargetTransformInfo
+382     auto LookupTTI = [this](Function &F) -> TargetTransformInfo & {
+383       return this->getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
+384     };
+385
+返回TargetMachine
+386     const auto &TM = getAnalysis<TargetPassConfig>().getTM<TargetMachine>();
+生成PreISelIntrinsicLowering
+387     PreISelIntrinsicLowering Lowering(TM, LookupTTI);
+调用lowerIntrinsics
+388     return Lowering.lowerIntrinsics(M);
+```
+```
+274 bool PreISelIntrinsicLowering::lowerIntrinsics(Module &M) const {
+276   for (Function &F : M) {
+编译当前Module的所有函数
+277     switch (F.getIntrinsicID()) {
+返回当前函数的Intrinsic编号，或者返回不是intrinsic
+282     case Intrinsic::memset:
+283       Changed |= expandMemIntrinsicUses(F);
+如果函数是memset
+
+208 bool PreISelIntrinsicLowering::expandMemIntrinsicUses(Function &F) const {
+209   Intrinsic::ID ID = F.getIntrinsicID();
+210   bool Changed = false;
+211
+找到所有对Intrinsic的调用
+212   for (User *U : llvm::make_early_inc_range(F.users())) {
+213     Instruction *Inst = cast<Instruction>(U);
+214
+215     switch (ID) {
+
+250     case Intrinsic::memset: {
+251       auto *Memset = cast<MemSetInst>(Inst);
+252       Function *ParentFunc = Memset->getFunction();
+查找memset函数的目标变换信息
+253       const TargetTransformInfo &TTI = LookupTTI(*ParentFunc);
+254       if (shouldExpandMemIntrinsicWithSize(Memset->getLength(), TTI)) {
+如果仍然使用intrinsic函数，并且支持MEMSET，则退出
+255         if (UseMemIntrinsicLibFunc &&
+256             canEmitLibcall(TM, ParentFunc, RTLIB::MEMSET))
+257           break;
+258
+这里把memset修改为循环处理
+259         expandMemSetAsLoop(Memset);
+260         Changed = true;
+把原来的函数删除掉
+261         Memset->eraseFromParent();
+262       }
+263
+264       break;
+265     }
+```
+### Expand large div/rem
+CodeGen/ExpandLargeDivRem.cpp
+```
+ExpandLargeDivRemLegacyPass::runOnFunction
+118   bool runOnFunction(Function &F) override {
+119     auto *TM = &getAnalysis<TargetPassConfig>().getTM<TargetMachine>();
+120     auto *TLI = TM->getSubtargetImpl(F)->getTargetLowering();
+121     return runImpl(F, *TLI);
+
+ 57 static bool runImpl(Function &F, const TargetLowering &TLI) {
+
+```
