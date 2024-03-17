@@ -705,5 +705,12 @@ ExpandLargeDivRemLegacyPass::runOnFunction
 121     return runImpl(F, *TLI);
 
  57 static bool runImpl(Function &F, const TargetLowering &TLI) {
-
 ```
+依次使用Function PASS处理每个函数,直到处理完毕所有的函数，当前Function PASS处理完毕，然后进入接下来的Module Pass
+
+### Replace occurrences of __nvvm_reflect() calls with 0/1
+参考https://llvm.org/docs/NVPTXUsage.html#ptxas-complains-of-undefined-function-nvvm-reflect
+This pass looks for calls to the @__nvvm_reflect function and replaces them with constants based on the defined reflection parameters.
+实现Target/NVPTX/NVVMReflect.cpp
+### Assign valid PTX names to globals
+实现NVPTXAssignValidGlobalNames.cpp
