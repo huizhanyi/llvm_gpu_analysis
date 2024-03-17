@@ -737,4 +737,11 @@ This pass looks for calls to the @__nvvm_reflect function and replaces them with
 ```
 把ADDRESS_SPACE_GENERIC全局变量替换为ADDRESS_SPACE_GLOBAL
 ### Lower pointer arguments of CUDA kernels
-
+```
+481 bool NVPTXLowerArgs::runOnFunction(Function &F) {
+482   auto &TM = getAnalysis<TargetPassConfig>().getTM<NVPTXTargetMachine>();
+483
+484   return isKernelFunction(F) ? runOnKernelFunction(TM, F)
+485                              : runOnDeviceFunction(TM, F);
+486 }
+```
