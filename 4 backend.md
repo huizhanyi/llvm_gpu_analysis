@@ -714,3 +714,27 @@ This pass looks for calls to the @__nvvm_reflect function and replaces them with
 实现Target/NVPTX/NVVMReflect.cpp
 ### Assign valid PTX names to globals
 实现NVPTXAssignValidGlobalNames.cpp
+参考
+```
+// Clean up the names of global variables in the module to not contain symbols
+// that are invalid in PTX.
+//
+// Currently NVPTX, like other backends, relies on generic symbol name
+// sanitizing done by MC. However, the ptxas assembler is more stringent and
+// disallows some additional characters in symbol names. This pass makes sure
+// such names do not reach MC at all.
+```
+替换掉后端不允许的一些变量名命名。
+### Ensure that the global variables are in the global address space
+实现NVPTXGenericToNVVM.cpp
+```
+289   bool runOnModule(Module &M) override;
+304 bool GenericToNVVMLegacyPass::runOnModule(Module &M) {
+305   return GenericToNVVM().runOnModule(M);
+306 }
+
+ 56 bool GenericToNVVM::runOnModule(Module &M) {
+```
+把ADDRESS_SPACE_GENERIC全局变量替换为ADDRESS_SPACE_GLOBAL
+### Lower pointer arguments of CUDA kernels
+
