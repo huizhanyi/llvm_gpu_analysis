@@ -741,7 +741,37 @@ This pass looks for calls to the @__nvvm_reflect function and replaces them with
 481 bool NVPTXLowerArgs::runOnFunction(Function &F) {
 482   auto &TM = getAnalysis<TargetPassConfig>().getTM<NVPTXTargetMachine>();
 483
+分别处理kernel函数和device函数
 484   return isKernelFunction(F) ? runOnKernelFunction(TM, F)
 485                              : runOnDeviceFunction(TM, F);
 486 }
+```
+kernel函数
+```
+421 bool NVPTXLowerArgs::runOnKernelFunction(const NVPTXTargetMachine &TM,
+422                                          Function &F) {
+
+427   auto HandleIntToPtr = [this](Value &V) {
+如果V的所有使用都是整数到指针的转换操作
+428     if (llvm::all_of(V.users(), [](User *U) { return isa<IntToPtrInst>(U); })) {
+429       SmallVector<User *, 16> UsersToUpdate(V.users());
+将其替换为全局地址空间的指针类型
+430       for (User *U : UsersToUpdate)
+431         markPointerAsGlobal(U);
+432     }
+433   };
+
+457   for (Argument &Arg : F.args()) {
+458     if (Arg.getType()->isPointerTy()) {
+459       if (Arg.hasByValAttr())
+460         handleByValParam(TM, &Arg);
+461       else if (TM.getDrvInterface() == NVPTX::CUDA)
+462         markPointerAsGlobal(&Arg);
+这里将参数转换到全局地址空间，然后再转换回原来的通用地址空间。
+463     } else if (Arg.getType()->isIntegerTy() &&
+464                TM.getDrvInterface() == NVPTX::CUDA) {
+465       HandleIntToPtr(Arg);
+466     }
+467   }
+
 ```
