@@ -773,5 +773,27 @@ kernel函数
 465       HandleIntToPtr(Arg);
 466     }
 467   }
-
 ```
+### Lower ctors and dtors for NVPTX
+NVPTXCtorDtorLowering.cpp
+```
+/// This pass creates a unified init and fini kernel with the required metadata
+267 static bool lowerCtorsAndDtors(Module &M) {
+268   bool Modified = false;
+269   Modified |= createInitOrFiniKernel(M, "llvm.global_ctors", /*IsCtor =*/true);
+270   Modified |= createInitOrFiniKernel(M, "llvm.global_dtors", /*IsCtor =*/false);
+271   return Modified;
+272 }
+```
+这里的实例不涉及这个问题。
+### add an exit instruction before every unreachable
+NVPTXLowerUnreachable.cpp
+LLVM IR处理，方便后面的ptxas生成指令
+### Lower aggregate copies/intrinsics into loops
+```
+// Lower aggregate copies, memset, memcpy, memmov intrinsics into loops when
+// the size is large or is not a compile-time constant.
+```
+### NVPTX DAG->DAG Pattern Instruction Selection
+进入LLVM到DAG转换过程
+
