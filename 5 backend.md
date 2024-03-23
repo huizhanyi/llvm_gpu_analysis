@@ -90,6 +90,15 @@ llvm/lib/CodeGen/SelectionDAG/SelectionDAGISel.cpp
  442     NewOptLevel = CodeGenOptLevel::None;
  443   OptLevelChanger OLC(*this, NewOptLevel);
 优化层次相关设置
+```
+由-O2调整为-O0，打开FastISel
+```
+Changing optimization level for Function _Z8multiplyff
+        Before: -O2 ; After: -O0
+        FastISel is enabled
+```
+
+```
  445   TII = MF->getSubtarget().getInstrInfo();
 对应子类NVPTXInstrInfo
  446   TLI = MF->getSubtarget().getTargetLowering();
