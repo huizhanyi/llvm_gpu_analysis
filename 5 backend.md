@@ -104,6 +104,10 @@ Changing optimization level for Function _Z8multiplyff
  446   TLI = MF->getSubtarget().getTargetLowering();
 对应子类NVPTXTargetLowering
 取目标相关信息
+ 461   ISEL_DUMP(dbgs() << "\n\n\n=== " << FuncName << "\n");
+打印当前函数名
 ```
-
+```
+=== _Z8multiplyff
+```
 
