@@ -110,4 +110,49 @@ Changing optimization level for Function _Z8multiplyff
 ```
 === _Z8multiplyff
 ```
+```
+ 466   CurDAG->init(*MF, *ORE, this, LibInfo, UA, PSI, BFI, FnVarLocs);
+当前类中包括SelectionDAG *CurDAG定义。
+```
+init定义llvm/lib/CodeGen/SelectionDAG/SelectionDAG.cpp,根据定义，用给定的MF准备SelectionDAG，生成代码。
+```
+ 455   /// Prepare this SelectionDAG to process code in the given MachineFunction.
+
+ 1326 void SelectionDAG::init(MachineFunction &NewMF,
+ 1327                         OptimizationRemarkEmitter &NewORE, Pass *PassPtr,
+ 1328                         const TargetLibraryInfo *LibraryInfo,
+ 1329                         UniformityInfo *NewUA, ProfileSummaryInfo *PSIin,
+ 1330                         BlockFrequencyInfo *BFIin,
+ 1331                         FunctionVarLocs const *VarLocs) {
+ 1332   MF = &NewMF;
+ 1333   SDAGISelPass = PassPtr;
+ 1334   ORE = &NewORE;
+ 1335   TLI = getSubtarget().getTargetLowering();
+ 1336   TSI = getSubtarget().getSelectionDAGInfo();
+ 1337   LibInfo = LibraryInfo;
+ 1338   Context = &MF->getFunction().getContext();
+ 1339   UA = NewUA;
+ 1340   PSI = PSIin;
+ 1341   BFI = BFIin;
+ 1342   FnVarLocs = VarLocs;
+ 1343 }
+```
+```
+ 467   FuncInfo->set(Fn, *MF, CurDAG);
+ 468   SwiftError->setFunction(*MF);
+```
+初始化FunctionLoweringInfo结构和SwiftErrorValueTracking结构
+```
+ 485   SDB->init(GFI, AA, AC, LibInfo);
+```
+初始化SelectionDAGBuilder
+```
+ 511   MachineBasicBlock *EntryMBB = &MF->front();
+```
+取MachineBasicBlock入口块,MachineBasicBlock定义如下，是BasicBlock的一个wrapper类或者扩展类
+```
+ 101 class MachineBasicBlock
+ 102     : public ilist_node_with_parent<MachineBasicBlock, MachineFunction> {
+ 119   const BasicBlock *BB;
+```
 
