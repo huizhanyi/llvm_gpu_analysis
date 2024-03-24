@@ -179,6 +179,8 @@ llvm/lib/CodeGen/SelectionDAG/SelectionDAGISel.cpp
 1581         LLVMBB->getFirstNonPHI()->getIterator();
 1582     BasicBlock::const_iterator const End = LLVMBB->end();
 取当前块的开始和结束位置
+1585     FuncInfo->MBB = FuncInfo->MBBMap[LLVMBB];
+设置当前处理的基本块。
 ```
 
 
