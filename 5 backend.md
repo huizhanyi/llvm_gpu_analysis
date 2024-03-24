@@ -155,4 +155,9 @@ init定义llvm/lib/CodeGen/SelectionDAG/SelectionDAG.cpp,根据定义，用给�
  102     : public ilist_node_with_parent<MachineBasicBlock, MachineFunction> {
  119   const BasicBlock *BB;
 ```
+llvm/lib/CodeGen/SelectionDAG/SelectionDAGISel.cpp
+```
+ 516   SelectAllBasicBlocks(Fn);
+```
+遍历所有基本块，处理之
 
