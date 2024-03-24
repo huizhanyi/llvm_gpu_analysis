@@ -160,4 +160,25 @@ llvm/lib/CodeGen/SelectionDAG/SelectionDAGISel.cpp
  516   SelectAllBasicBlocks(Fn);
 ```
 遍历所有基本块，处理之
+```
+1489 void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
+1506   FuncInfo->MBB = FuncInfo->MBBMap[&Fn.getEntryBlock()];
+设置当前处理的基本块
+1507   FuncInfo->InsertPt = FuncInfo->MBB->begin();
+当前的插入点？
+1509   CurDAG->setFunctionLoweringInfo(FuncInfo.get());
+设置当前的FunctionLoweringInfo
+1511   if (!FastIS) {
+1512     LowerArguments(Fn);
+调用SelectionDAGISel::LowerArguments，考虑lower arguments
+1557   // Iterate over all basic blocks in the function.
+1558   StackProtector &SP = getAnalysis<StackProtector>();
+1559   for (const BasicBlock *LLVMBB : RPOT) {
+迭代处理所有基本块
+1580     BasicBlock::const_iterator const Begin =
+1581         LLVMBB->getFirstNonPHI()->getIterator();
+1582     BasicBlock::const_iterator const End = LLVMBB->end();
+取当前块的开始和结束位置
+```
+
 
