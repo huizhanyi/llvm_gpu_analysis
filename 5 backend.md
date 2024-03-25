@@ -181,6 +181,108 @@ llvm/lib/CodeGen/SelectionDAG/SelectionDAGISel.cpp
 取当前块的开始和结束位置
 1585     FuncInfo->MBB = FuncInfo->MBBMap[LLVMBB];
 设置当前处理的基本块。
+1751       SelectBasicBlock(Begin, BI, HadTailCall);
+处理FastISel没有处理的部分
 ```
+处理单个BasicBlock
+```
+ 715 void SelectionDAGISel::SelectBasicBlock(BasicBlock::const_iterator Begin,
+ 716                                         BasicBlock::const_iterator End,
+ 717                                         bool &HadTailCall) {
+ 718   // Allow creating illegal types during DAG building for the basic block.
+ 719   CurDAG->NewNodesMustHaveLegalTypes = false;
+允许生成非法类型
+ 721   // Lower the instructions. If a call is emitted as a tail call, cease emitting
+ 722   // nodes for this block. If an instruction is elided, don't emit it, but do
+ 723   // handle any debug-info attached to it.
+ 724   for (BasicBlock::const_iterator I = Begin; I != End && !SDB->HasTailCall; ++I) {
+ 725     if (!ElidedArgCopyInstrs.count(&*I))
+ 726       SDB->visit(*I);
+SDB是SelectionDAGBuilder结构
+ 727     else
+处理指令调试信息
+ 728       SDB->visitDbgInfo(*I);
+ 729   }
+Lower每个指令。
+```
+llvm/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp
+```
+ 1288 void SelectionDAGBuilder::visit(const Instruction &I) {
+ 1289   visitDbgInfo(I);
+ 1290
+ 1291   // Set up outgoing PHI node register values before emitting the terminator.
+ 1292   if (I.isTerminator()) {
+ 1293     HandlePHINodesInSuccessorBlocks(I.getParent());
+ 1294   }
+ 1295
+ 1296   // Increase the SDNodeOrder if dealing with a non-debug instruction.
+ 1297   if (!isa<DbgInfoIntrinsic>(I))
+ 1298     ++SDNodeOrder;
+ 1299
+ 1300   CurInst = &I;
+ 1301
+ 1302   // Set inserted listener only if required.
+ 1303   bool NodeInserted = false;
+ 1304   std::unique_ptr<SelectionDAG::DAGNodeInsertedListener> InsertedListener;
+ 1305   MDNode *PCSectionsMD = I.getMetadata(LLVMContext::MD_pcsections);
+ 1306   if (PCSectionsMD) {
+ 1307     InsertedListener = std::make_unique<SelectionDAG::DAGNodeInsertedListener>(
+ 1308         DAG, [&](SDNode *) { NodeInserted = true; });
+ 1309   }
+根据操作码处理指令，定义如后面。
+ 1311   visit(I.getOpcode(), I);
+ 1312
+ 1313   if (!I.isTerminator() && !HasTailCall &&
+ 1314       !isa<GCStatepointInst>(I)) // statepoints handle their exports internally
+ 1315     CopyToExportRegsIfNeeded(&I);
+ 1316
+ 1317   // Handle metadata.
+ 1318   if (PCSectionsMD) {
+ 1319     auto It = NodeMap.find(&I);
+ 1320     if (It != NodeMap.end()) {
+ 1321       DAG.addPCSections(It->second.getNode(), PCSectionsMD);
+ 1322     } else if (NodeInserted) {
+ 1323       // This should not happen; if it does, don't let it go unnoticed so we can
+ 1324       // fix it. Relevant visit*() function is probably missing a setValue().
+ 1325       errs() << "warning: loosing !pcsections metadata ["
+ 1326              << I.getModule()->getName() << "]\n";
+ 1327       LLVM_DEBUG(I.dump());
+ 1328       assert(false);
+ 1329     }
+ 1330   }
+ 1331
+ 1332   CurInst = nullptr;
+ 1333 }
+```
+llvm/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp
+```
+ 1339 void SelectionDAGBuilder::visit(unsigned Opcode, const User &I) {
+ 1340   // Note: this doesn't use InstVisitor, because it has to work with
+ 1341   // ConstantExpr's in addition to instructions.
+ 1342   switch (Opcode) {
+ 1343   default: llvm_unreachable("Unknown instruction type encountered!");
+ 1344     // Build the switch statement using the Instruction.def file.
+ 1345 #define HANDLE_INST(NUM, OPCODE, CLASS) \
+ 1346     case Instruction::OPCODE: visit##OPCODE((const CLASS&)I); break;
+根据指令的OPCODE，调用对应的visitOPCODE函数。
+ 1347 #include "llvm/IR/Instruction.def"
+ 1348   }
+ 1349 }
+```
+这里调用对应的visitOPCODE函数，例如visitRet函数，visitCallBr函数。这些函数都是“class SelectionDAGBuilder”的方法函数。
 
+返回SelectionDAGISel::SelectBasicBlock函数
+```
+ 731   // Make sure the root of the DAG is up-to-date.
+ 732   CurDAG->setRoot(SDB->getControlRoot());
+
+ 737   // Final step, emit the lowered DAG as machine code.
+ 738   CodeGenAndEmitDAG();
+代码生成，直到生成机器码
+```
+llvm/lib/CodeGen/SelectionDAG/SelectionDAGISel.cpp
+```
+ 778 void SelectionDAGISel::CodeGenAndEmitDAG() {
+
+```
 
