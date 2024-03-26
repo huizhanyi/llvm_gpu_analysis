@@ -378,5 +378,41 @@ dump经过Selected selection DAG的DAG
  694   ISEL_DUMP(MF->print(dbgs()));
 ```
 结束ISel，dump结构。
+返回llvm::SelectionDAGISel::runOnMachineFunction
+返回llvm::NVPTXDAGToDAGISel::runOnMachineFunction
+返回llvm::MachineFunctionPass::runOnFunction
 
-
+## Finalize ISel and expand pseudo-instructions
+lib/CodeGen/FinalizeISel.cpp
+```
+ 46 bool FinalizeISel::runOnMachineFunction(MachineFunction &MF) {
+ 47   bool Changed = false;
+ 48   const TargetLowering *TLI = MF.getSubtarget().getTargetLowering();
+ 49
+ 50   // Iterate through each instruction in the function, looking for pseudos.
+ 51   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
+ 52     MachineBasicBlock *MBB = &*I;
+ 53     for (MachineBasicBlock::iterator MBBI = MBB->begin(), MBBE = MBB->end();
+ 54          MBBI != MBBE; ) {
+ 55       MachineInstr &MI = *MBBI++;
+ 56
+ 57       // If MI is a pseudo, expand it.
+ 58       if (MI.usesCustomInsertionHook()) {
+ 59         Changed = true;
+ 60         MachineBasicBlock *NewMBB = TLI->EmitInstrWithCustomInserter(MI, MBB);
+ 61         // The expansion may involve new basic blocks.
+ 62         if (NewMBB != MBB) {
+ 63           MBB = NewMBB;
+ 64           I = NewMBB->getIterator();
+ 65           MBBI = NewMBB->begin();
+ 66           MBBE = NewMBB->end();
+ 67         }
+ 68       }
+ 69     }
+ 70   }
+ 71
+ 72   TLI->finalizeLowering(MF);
+ 73
+ 74   return Changed;
+ 75 }
+```
