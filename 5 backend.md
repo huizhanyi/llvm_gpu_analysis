@@ -281,6 +281,8 @@ llvm/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp
 ```
 代码生成，直到生成机器码，流程图
 ![image](https://github.com/huizhanyi/llvm_gpu_analysis/blob/main/SelectionDAG_Overview.png)
+来自：https://csstormq.github.io/blog/LLVM%20%E4%B9%8B%E5%90%8E%E7%AB%AF%E7%AF%87%EF%BC%884%EF%BC%89%EF%BC%9A%E7%90%86%E8%A7%A3%E6%8C%87%E4%BB%A4%E9%80%89%E6%8B%A9%E7%9A%84%20dump%20%E8%BE%93%E5%87%BA
+
 llvm/lib/CodeGen/SelectionDAG/SelectionDAGISel.cpp
 ```
  778 void SelectionDAGISel::CodeGenAndEmitDAG() {
