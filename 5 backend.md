@@ -361,6 +361,22 @@ dump经过Selected selection DAG的DAG
 1002     Scheduler->Run(CurDAG, FuncInfo->MBB);
 1017     LastMBB = FuncInfo->MBB = Scheduler->EmitSchedule(FuncInfo->InsertPt);
 ```
-完成调度？
+完成调度？返回llvm::SelectionDAGISel::SelectBasicBlock
+返回llvm::SelectionDAGISel::SelectAllBasicBlocks
+返回llvm::SelectionDAGISel::runOnMachineFunction
+```
+ 528   MachineRegisterInfo &MRI = MF->getRegInfo();
+ 529   for (DenseMap<Register, Register>::iterator I = FuncInfo->RegFixups.begin(),
+ 530                                               E = FuncInfo->RegFixups.end();
+```
+用理想的值取代前向声明的寄存器
+```
+ 559   RegInfo->EmitLiveInCopies(EntryMBB, TRI, *TII);
+```
+```
+ 693   ISEL_DUMP(dbgs() << "*** MachineFunction at end of ISel ***\n");
+ 694   ISEL_DUMP(MF->print(dbgs()));
+```
+结束ISel，dump结构。
 
 
