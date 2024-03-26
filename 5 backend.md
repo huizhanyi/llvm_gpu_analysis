@@ -304,5 +304,63 @@ dump初始的DAG形式
  828             CurDAG->dump());
 ```
 dump经过Optimized lowered selection DAG的DAG
+```
+ 844     Changed = CurDAG->LegalizeTypes();
+ 847   ISEL_DUMP(dbgs() << "\nType-legalized selection DAG: "
+ 848                    << printMBBReference(*FuncInfo->MBB) << " '" << BlockName
+ 849                    << "'\n";
+ 850             CurDAG->dump());
+```
+dump经过Type-legalized selection DAG的DAG
+```
+ 868       CurDAG->Combine(AfterLegalizeTypes, AA, OptLevel);
+ 871     ISEL_DUMP(dbgs() << "\nOptimized type-legalized selection DAG: "
+ 872                      << printMBBReference(*FuncInfo->MBB) << " '" << BlockName
+ 873                      << "'\n";
+ 874               CurDAG->dump());
+```
+dump经过Optimized type-legalized selection DAG的DAG
+```
+ 868       CurDAG->Combine(AfterLegalizeTypes, AA, OptLevel);
+
+ 871     ISEL_DUMP(dbgs() << "\nOptimized type-legalized selection DAG: "
+ 872                      << printMBBReference(*FuncInfo->MBB) << " '" << BlockName
+ 873                      << "'\n";
+ 874               CurDAG->dump());
+```
+dump经过Optimized type-legalized selection DAG的DAG
+```
+ 885     Changed = CurDAG->LegalizeVectors();
+ 888   if (Changed) {
+ 889     ISEL_DUMP(dbgs() << "\nVector-legalized selection DAG: "
+ 890                      << printMBBReference(*FuncInfo->MBB) << " '" << BlockName
+ 891                      << "'\n";
+ 892               CurDAG->dump());
+```
+dump经过Vector-legalized selection DAG的DAG
+这里因为DAG没有变化，不会Dump
+```
+ 942     CurDAG->Legalize();
+ 945   ISEL_DUMP(dbgs() << "\nLegalized selection DAG: "
+ 946                    << printMBBReference(*FuncInfo->MBB) << " '" << BlockName
+ 947                    << "'\n";
+ 948             CurDAG->dump());
+```
+dump经过Legalized selection DAG的DAG
+```
+ 986     DoInstructionSelection();
+ 989   ISEL_DUMP(dbgs() << "\nSelected selection DAG: "
+ 990                    << printMBBReference(*FuncInfo->MBB) << " '" << BlockName
+ 991                    << "'\n";
+ 992             CurDAG->dump());
+```
+完成Instruction selection
+dump经过Selected selection DAG的DAG
+```
+ 998   ScheduleDAGSDNodes *Scheduler = CreateScheduler();
+1002     Scheduler->Run(CurDAG, FuncInfo->MBB);
+1017     LastMBB = FuncInfo->MBB = Scheduler->EmitSchedule(FuncInfo->InsertPt);
+```
+完成调度？
 
 
