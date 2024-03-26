@@ -278,10 +278,9 @@ llvm/lib/CodeGen/SelectionDAG/SelectionDAGBuilder.cpp
 
  737   // Final step, emit the lowered DAG as machine code.
  738   CodeGenAndEmitDAG();
+```
 代码生成，直到生成机器码，流程图
 ![image](https://github.com/huizhanyi/llvm_gpu_analysis/blob/main/SelectionDAG_Overview.png)
-
-```
 llvm/lib/CodeGen/SelectionDAG/SelectionDAGISel.cpp
 ```
  778 void SelectionDAGISel::CodeGenAndEmitDAG() {
