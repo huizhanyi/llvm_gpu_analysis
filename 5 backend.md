@@ -420,4 +420,34 @@ NVPTX后端没有特殊定义这个函数。
  75 }
 ```
 ## Local Stack Slot Allocation
-
+CodeGen/LocalStackSlotAllocation.cpp
+```
+112 bool LocalStackSlotPass::runOnMachineFunction(MachineFunction &MF) {
+113   MachineFrameInfo &MFI = MF.getFrameInfo();
+114   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
+115   unsigned LocalObjectCount = MFI.getObjectIndexEnd();
+116
+117   // If the target doesn't want/need this pass, or if there are no locals
+118   // to consider, early exit.
+119   if (LocalObjectCount == 0 || !TRI->requiresVirtualBaseRegisters(MF))
+120     return false;
+121
+122   // Make sure we have enough space to store the local offsets.
+123   LocalOffsets.resize(MFI.getObjectIndexEnd());
+124
+125   // Lay out the local blob.
+126   calculateFrameObjectOffsets(MF);
+127
+128   // Insert virtual base registers to resolve frame index references.
+129   bool UsedBaseRegs = insertFrameReferenceRegisters(MF);
+130
+131   // Tell MFI whether any base registers were allocated. PEI will only
+132   // want to use the local block allocations from this pass if there were any.
+133   // Otherwise, PEI can do a bit better job of getting the alignment right
+134   // without a hole at the start since it knows the alignment of the stack
+135   // at the start of local allocation, and this pass doesn't.
+136   MFI.setUseLocalStackAllocationBlock(UsedBaseRegs);
+137
+138   return true;
+139 }
+```
