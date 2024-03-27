@@ -388,6 +388,7 @@ lib/CodeGen/FinalizeISel.cpp
  46 bool FinalizeISel::runOnMachineFunction(MachineFunction &MF) {
  47   bool Changed = false;
  48   const TargetLowering *TLI = MF.getSubtarget().getTargetLowering();
+实际调用llvm::NVPTXSubtarget::getTargetLowering，返回NVPTXTargetLowering
  49
  50   // Iterate through each instruction in the function, looking for pseudos.
  51   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
@@ -400,6 +401,7 @@ lib/CodeGen/FinalizeISel.cpp
  58       if (MI.usesCustomInsertionHook()) {
  59         Changed = true;
  60         MachineBasicBlock *NewMBB = TLI->EmitInstrWithCustomInserter(MI, MBB);
+这是后端目标需要自定义的方法，但是NVPTX后端没有定义，是不涉及这样伪指令吗？
  61         // The expansion may involve new basic blocks.
  62         if (NewMBB != MBB) {
  63           MBB = NewMBB;
@@ -412,7 +414,10 @@ lib/CodeGen/FinalizeISel.cpp
  70   }
  71
  72   TLI->finalizeLowering(MF);
+NVPTX后端没有特殊定义这个函数。
  73
  74   return Changed;
  75 }
 ```
+## Local Stack Slot Allocation
+
