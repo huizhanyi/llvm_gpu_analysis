@@ -425,11 +425,13 @@ CodeGen/LocalStackSlotAllocation.cpp
 112 bool LocalStackSlotPass::runOnMachineFunction(MachineFunction &MF) {
 113   MachineFrameInfo &MFI = MF.getFrameInfo();
 114   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
+返回NVPTXRegisterInfo结构指针
 115   unsigned LocalObjectCount = MFI.getObjectIndexEnd();
 116
 117   // If the target doesn't want/need this pass, or if there are no locals
 118   // to consider, early exit.
 119   if (LocalObjectCount == 0 || !TRI->requiresVirtualBaseRegisters(MF))
+NVPTX在这里直接返回。
 120     return false;
 121
 122   // Make sure we have enough space to store the local offsets.
