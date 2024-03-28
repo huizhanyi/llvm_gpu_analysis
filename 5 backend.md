@@ -453,3 +453,52 @@ NVPTX在这里直接返回。
 138   return true;
 139 }
 ```
+## NVPTX Proxy Register Instruction Erasure
+NVPTX/NVPTXProxyRegErasure.cpp
+```
+ 66 bool NVPTXProxyRegErasure::runOnMachineFunction(MachineFunction &MF) {
+观察文件注释
+  9 // The pass is needed to remove ProxyReg instructions and restore related
+ 10 // registers. The instructions were needed at instruction selection stage to
+ 11 // make sure that callseq_end nodes won't be removed as "dead nodes". This can
+ 12 // happen when we expand instructions into libcalls and the call site doesn't
+ 13 // care about the libcall chain. Call site cares about data flow only, and the
+ 14 // latest data flow node happens to be before callseq_end. Therefore the node
+ 15 // becomes dangling and "dead". The ProxyReg acts like an additional data flow
+ 16 // node *after* the callseq_end in the chain and ensures that everything will be
+ 17 // preserved.
+```
+## Eliminate PHI nodes for register allocation
+这是个通用后端PASS
+## Two-Address instruction pass
+这是个通用后端PASS
+```
+// This file implements the TwoAddress instruction pass which is used
+// by most register allocators. Two-Address instructions are rewritten
+// from:
+//
+//     A = B op C
+//
+// to:
+//
+//     A = B
+//     A op= C
+//
+// Note that if a register allocator chooses to use this pass, that it
+// has to be capable of handling the non-SSA nature of these rewritten
+// virtual registers.
+//
+// It is also worth noting that the duplicate operand of the two
+// address instruction is removed.
+```
+## NVPTX Prolog Epilog Pass
+NVPTXPrologEpilogPass.cpp
+```
+ 52 bool NVPTXPrologEpilogPass::runOnMachineFunction(MachineFunction &MF) {
+// This file is a copy of the generic LLVM PrologEpilogInserter pass, modified
+// to remove unneeded functionality and to handle virtual registers. Most code
+// here is a copy of PrologEpilogInserter.cpp.
+```
+## Remove Redundant DEBUG_VALUE analysis
+## Fixup Statepoint Caller Saved
+## Post-RA pseudo instruction expansion pass
